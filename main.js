@@ -7,18 +7,38 @@ var recording = false
 var step = 0;
 var noteOn = {};
 var noteOff = {};
+var outputs = []
+
+var synth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+fakeOutput = {
+    "name": "fakeOutput",
+}
+
+fakeOutput.playNote = function(note_name, channel) {
+    synth.triggerAttack(note_name,  Tone.now())
+}
+
+fakeOutput.stopNote = function(note_name, channel) {
+    synth.triggerRelease(note_name,  Tone.now())
+}
+
+function start() {
+    Tone.start();
+}
+
 function tick() {
     if (!playing) {
         return
     }
     if (typeof noteOn[step] !== "undefined") {
         noteOn[step].forEach(function (note) {
-            WebMidi.outputs[1].playNote(note, 1);
+            outputs[1].playNote(note, 1);
         })
     }
     if (typeof noteOff[step] !== "undefined") {
         noteOff[step].forEach(function (note) {
-            WebMidi.outputs[1].stopNote(note, 1);
+            outputs[1].stopNote(note, 1);
         })
     }
     if (lastTick === 0) {
@@ -52,26 +72,30 @@ function stopRecording() {
     recording = false
 }
 
-WebMidi.enable((err) => {
-    console.log(WebMidi.inputs);
-    console.log(WebMidi.outputs);
+function getOutputs() {
+    return WebMidi.outputs.concat([fakeOutput]);
+}
 
-    WebMidi.inputs[0].addListener("noteon", "all", (event) => {
+WebMidi.enable((err) => {
+    console.log(getOutputs());
+    console.log(WebMidi.inputs);
+
+    WebMidi.inputs[0].addListener("noteon", "all", function (event) {
         if (playing && recording) {
             if (typeof noteOn[step] == "undefined") {
                 noteOn[step] = []
             }
-            noteOn[step].push(event.note.number)
+            noteOn[step].push(event.note.name + event.note.octave)
         }
-        WebMidi.outputs[1].playNote(event.note.number, event.channel);
+        getOutputs()[1].playNote(event.note.name + event.note.octave, event.channel);
     });
-    WebMidi.inputs[0].addListener("noteoff", "all", (event) => {
+    WebMidi.inputs[0].addListener("noteoff", "all", function (event) {
         if (playing && recording) {
             if (typeof noteOff[step] == "undefined") {
                 noteOff[step] = []
             }
-            noteOff[step].push(event.note.number)
+            noteOff[step].push(event.note.name + event.note.octave)
         }
-        WebMidi.outputs[1].stopNote(event.note.number, event.channel);
+        getOutputs()[1].stopNote(event.note.name + event.note.octave, event.channel);
     });
 });
