@@ -3,13 +3,26 @@
         <script src="node_modules/webmidi/webmidi.min.js"></script>
         <script src="node_modules/tone/build/Tone.js"></script>
         <script src="main.js"></script>
+        <link rel="stylesheet" href="main.css"/>
     </head>
     <body>
-        <button onclick="start()">Start</button>
+        <button onclick="start()" id="start_button">Start</button>
         <button onclick="play()">Play</button>
         <button onclick="stop()">Stop</button>
         <button onclick="record()">Record</button>
         <button onclick="stopRecording()">Stop Recording</button>
+        <button onclick="enableMetronome()">Enable Metronome</button>
+        <div class="cassette-image">
+            <img src="cassette.png" />
+        </div>
+        <div id="timeline-center"></div>
+        <div id="timeline">
+            <div class="timeline-guides"></div>
+            <div class="track" id="track_1"></div>
+            <div class="track" id="track_2"></div>
+            <div class="track" id="track_3"></div>
+            <div class="track" id="track_4"></div>
+        </div>
         <div id="step_display"></div>
     </body>
 </html>

@@ -7,9 +7,11 @@ var recording = false
 var step = 0;
 var noteOn = {};
 var noteOff = {};
-var outputs = []
+var outputs = [];
+var metronome = true;
 
 var synth = new Tone.PolySynth(Tone.Synth).toDestination();
+var synth = new Tone.Synth().toDestination();
 
 fakeOutput = {
     "name": "fakeOutput",
@@ -25,6 +27,7 @@ fakeOutput.stopNote = function(note_name, channel) {
 
 function start() {
     Tone.start();
+    document.getElementById("start_button").remove();
 }
 
 function tick() {
@@ -41,10 +44,22 @@ function tick() {
             getOutputs()[1].stopNote(note, 1);
         })
     }
+    if (metronome) {
+        if (step % (ppq*4) === 0) {
+            synth.triggerAttackRelease("C4", .1);
+        } else if (step % ppq === 0) {
+            synth.triggerAttackRelease("C3", .1);
+        }
+    }
     if (lastTick === 0) {
         lastTick = performance.now();
     }
     step++
+    bar_width = 100;
+    pixel_per_note = bar_width / 4;
+    quarter_notes = step/ppq;
+    progress = quarter_notes * pixel_per_note;
+    document.getElementById("timeline").style = "margin-left: calc(50% - " + progress + "px);"
     step_display.innerText = step
     var offset = (performance.now() - lastTick) - tickRate
     setTimeout(tick, tickRate - offset)
