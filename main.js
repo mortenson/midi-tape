@@ -33,12 +33,12 @@ function tick() {
     }
     if (typeof noteOn[step] !== "undefined") {
         noteOn[step].forEach(function (note) {
-            outputs[1].playNote(note, 1);
+            getOutputs()[1].playNote(note, 1);
         })
     }
     if (typeof noteOff[step] !== "undefined") {
         noteOff[step].forEach(function (note) {
-            outputs[1].stopNote(note, 1);
+            getOutputs()[1].stopNote(note, 1);
         })
     }
     if (lastTick === 0) {
