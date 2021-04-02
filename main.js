@@ -11,7 +11,7 @@ var outputs = [];
 var metronome = true;
 
 var synth = new Tone.PolySynth(Tone.Synth).toDestination();
-var synth = new Tone.Synth().toDestination();
+var metronome_synth = new Tone.Synth().toDestination();
 
 fakeOutput = {
     "name": "fakeOutput",
@@ -22,7 +22,11 @@ fakeOutput.playNote = function(note_name, channel) {
 }
 
 fakeOutput.stopNote = function(note_name, channel) {
-    synth.triggerRelease(note_name,  Tone.now())
+    if (note_name === "all") {
+        synth.releaseAll();
+    } else {
+        synth.triggerRelease(note_name,  Tone.now())
+    }
 }
 
 function start() {
@@ -46,9 +50,9 @@ function tick() {
     }
     if (metronome) {
         if (step % (ppq*4) === 0) {
-            synth.triggerAttackRelease("C4", .1);
+            metronome_synth.triggerAttackRelease("C4", .1);
         } else if (step % ppq === 0) {
-            synth.triggerAttackRelease("C3", .1);
+            metronome_synth.triggerAttackRelease("C3", .1);
         }
     }
     if (lastTick === 0) {
@@ -77,6 +81,9 @@ function stop() {
     playing = false
     step = 0
     lastTick = 0
+    getOutputs().forEach(function (output) {
+        output.stopNote("all");
+    });
 }
 
 function record() {
