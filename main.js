@@ -66,10 +66,16 @@ function tick() {
     step_display.innerText = step
 }
 
-function play() {
-    if (!playing) {
-        playing = true
-    }
+function togglePlay() {
+    playing = !playing
+    lastTick = 0;
+    getOutputs().forEach(function (output) {
+        output.stopNote("all");
+    });
+}
+
+function toggleMetronome() {
+    metronome = !metronome;
 }
 
 function stop() {
@@ -79,14 +85,11 @@ function stop() {
     getOutputs().forEach(function (output) {
         output.stopNote("all");
     });
+    document.getElementById("timeline").style = "margin-left: calc(50%);"
 }
 
-function record() {
-    recording = true
-}
-
-function stopRecording() {
-    recording = false
+function toggleRecording() {
+    recording = !recording
 }
 
 function getOutputs() {
@@ -152,3 +155,20 @@ setInterval(function () {
         document.getElementById("track_1").append(segmentElem);
     });
 }, 1000);
+
+document.addEventListener('keydown', function(event) {
+    switch (event.key) {
+        case "p":
+            togglePlay();
+            break;
+        case "r":
+            toggleRecording();
+            break;
+        case "s":
+            stop();
+            break;
+        case "m":
+            toggleMetronome();
+            break;
+    }
+});
