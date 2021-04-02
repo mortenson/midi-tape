@@ -1,6 +1,5 @@
 var ppq = 120;
 var bpm = 110;
-var tickRate = 60000 / (bpm * ppq);
 var lastTick = 0;
 var playing = false
 var recording = false
@@ -65,15 +64,11 @@ function tick() {
     progress = quarter_notes * pixel_per_note;
     document.getElementById("timeline").style = "margin-left: calc(50% - " + progress + "px);"
     step_display.innerText = step
-    var offset = (performance.now() - lastTick) - tickRate
-    setTimeout(tick, tickRate - offset)
-    lastTick = performance.now();
 }
 
 function play() {
     if (!playing) {
         playing = true
-        tick()
     }
 }
 
@@ -121,3 +116,39 @@ WebMidi.enable((err) => {
         getOutputs()[1].stopNote(event.note.name + event.note.octave, event.channel);
     });
 });
+
+var timer = new Worker('timer.js');
+timer.onmessage = function(e) {
+    tick();
+}
+
+
+setInterval(function () {
+    document.getElementById("track_1").innerHTML = "";
+    var segments = [];
+    for (var i in noteOn) {
+        for (var j in noteOff) {
+            if (j < i) {
+                continue;
+            }
+            sharedNotes = noteOn[i].filter(note => noteOff[j].includes(note));
+            if (sharedNotes.length > 0) {
+                segments.push({
+                    firstStep: i,
+                    lastStep: j,
+                });
+                break;
+            }
+        }
+    }
+    segments.forEach(function (segment) {
+        var segmentElem = document.createElement("div");
+        segmentElem.classList = "timeline-segment";
+        bar_width = 100;
+        pixel_per_note = bar_width / 4;
+        left = (segment.firstStep/ppq) * pixel_per_note
+        width = ((segment.lastStep/ppq) * pixel_per_note) - left
+        segmentElem.style = `left: ${left}px; width: ${width}px`;
+        document.getElementById("track_1").append(segmentElem);
+    });
+}, 1000);

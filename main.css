@@ -13,6 +13,14 @@
     margin-left: 50%;
 }
 
+.timeline-segment {
+    height: 10px;
+    background: green;
+    position: absolute;
+    min-width: 1px;
+    top: calc(50% - 5px);
+}
+
 #timeline-center {
     margin-left: calc(50% - 5px);
     width: 10px;
@@ -37,4 +45,6 @@
         transparent calc(50% + 1px));
     height: 20px;
     margin: 20px 0;
+    position: relative;
+    margin-left: 1px;
 }

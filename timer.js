@@ -1,0 +1,26 @@
+var lastTick = 0;
+var ppq = 120;
+var bpm = 110;
+var tickRate = 60000 / (bpm * ppq);
+
+function tick() {
+    if (lastTick === 0) {
+        lastTick = performance.now();
+    }
+    postMessage({});
+    timeout = tickRate
+    var offset = (performance.now() - lastTick) - tickRate
+    if (offset > 0) {
+        timeout -= offset
+    }
+    setTimeout(tick, tickRate);
+    lastTick = performance.now();
+}
+
+tick();
+
+onmessage = function(e) {
+    ppq = e.data.ppq;
+    bpm = e.data.bpm;
+    tickrate = 60000 / (bpm * ppq);
+}
