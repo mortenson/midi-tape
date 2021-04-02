@@ -13,6 +13,15 @@
     margin-left: 50%;
 }
 
+#status {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+#status > * {
+    margin-right: 15px;
+}
+
 .timeline-segment {
     height: 10px;
     background: green;

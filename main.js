@@ -3,9 +3,27 @@ var bpm = 110;
 var lastTick = 0;
 var playing = false
 var recording = false
+var quantize = false
 var step = 0;
-var noteOn = {};
-var noteOff = {};
+var currentTrack = 0;
+var trackData = [
+    {
+        noteOn: {},
+        noteOff: {},
+    },
+    {
+        noteOn: {},
+        noteOff: {},
+    },
+    {
+        noteOn: {},
+        noteOff: {},
+    },
+    {
+        noteOn: {},
+        noteOff: {},
+    },
+];
 var outputs = [];
 var metronome = true;
 
@@ -37,13 +55,13 @@ function tick() {
     if (!playing) {
         return
     }
-    if (typeof noteOn[step] !== "undefined") {
-        noteOn[step].forEach(function (note) {
+    if (typeof trackData[currentTrack].noteOn[step] !== "undefined") {
+        trackData[currentTrack].noteOn[step].forEach(function (note) {
             getOutputs()[1].playNote(note, 1);
         })
     }
-    if (typeof noteOff[step] !== "undefined") {
-        noteOff[step].forEach(function (note) {
+    if (typeof trackData[currentTrack].noteOff[step] !== "undefined") {
+        trackData[currentTrack].noteOff[step].forEach(function (note) {
             getOutputs()[1].stopNote(note, 1);
         })
     }
@@ -74,6 +92,10 @@ function togglePlay() {
     });
 }
 
+function toggleQuantize() {
+    quantize = !quantize;
+}
+
 function toggleMetronome() {
     metronome = !metronome;
 }
@@ -96,25 +118,45 @@ function getOutputs() {
     return WebMidi.outputs.concat([fakeOutput]);
 }
 
+function quantizeStep(setStep) {
+    multiple = ppq / 2
+    newStep = setStep + multiple / 2;
+    newStep = newStep - (newStep % multiple);
+    return setStep;
+}
+
 WebMidi.enable((err) => {
     console.log(getOutputs());
     console.log(WebMidi.inputs);
 
     WebMidi.inputs[0].addListener("noteon", "all", function (event) {
         if (playing && recording) {
-            if (typeof noteOn[step] == "undefined") {
-                noteOn[step] = []
+            setStep = step;
+            if (quantize) {
+                setStep = quantizeStep(setStep)
             }
-            noteOn[step].push(event.note.name + event.note.octave)
+            if (typeof trackData[currentTrack].noteOn[setStep] == "undefined") {
+                trackData[currentTrack].noteOn[setStep] = []
+            }
+            trackData[currentTrack].noteOn[setStep].push(event.note.name + event.note.octave)
         }
         getOutputs()[1].playNote(event.note.name + event.note.octave, event.channel);
     });
     WebMidi.inputs[0].addListener("noteoff", "all", function (event) {
         if (playing && recording) {
-            if (typeof noteOff[step] == "undefined") {
-                noteOff[step] = []
+            setStep = step;
+            if (quantize) {
+                newStep = quantizeStep(setStep)
+                // Prevent notes from being cut off by having the same start+end time.
+                if (newStep < setStep) {
+                    newStep += ppq;
+                }
+                setStep = newStep
             }
-            noteOff[step].push(event.note.name + event.note.octave)
+            if (typeof trackData[currentTrack].noteOff[setStep] == "undefined") {
+                trackData[currentTrack].noteOff[setStep] = []
+            }
+            trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
         }
         getOutputs()[1].stopNote(event.note.name + event.note.octave, event.channel);
     });
@@ -129,12 +171,12 @@ timer.onmessage = function(e) {
 setInterval(function () {
     document.getElementById("track_1").innerHTML = "";
     var segments = [];
-    for (var i in noteOn) {
-        for (var j in noteOff) {
+    for (var i in trackData[currentTrack].noteOn) {
+        for (var j in trackData[currentTrack].noteOff) {
             if (j < i) {
                 continue;
             }
-            sharedNotes = noteOn[i].filter(note => noteOff[j].includes(note));
+            sharedNotes = trackData[currentTrack].noteOn[i].filter(note => trackData[currentTrack].noteOff[j].includes(note));
             if (sharedNotes.length > 0) {
                 segments.push({
                     firstStep: i,
@@ -154,7 +196,11 @@ setInterval(function () {
         segmentElem.style = `left: ${left}px; width: ${width}px`;
         document.getElementById("track_1").append(segmentElem);
     });
-}, 1000);
+    document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
+    document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
+    document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
+    document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
+}, 500);
 
 document.addEventListener('keydown', function(event) {
     switch (event.key) {
@@ -169,6 +215,9 @@ document.addEventListener('keydown', function(event) {
             break;
         case "m":
             toggleMetronome();
+            break;
+        case "q":
+            toggleQuantize();
             break;
     }
 });
