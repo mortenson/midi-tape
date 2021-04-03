@@ -103,7 +103,7 @@ function tick() {
         lastTick = performance.now();
     }
     step++
-    if (endMarker !== 0 && endMarker <= step) {
+    if (endMarker !== 0 && endMarker < step) {
         step = startMarker;
     }
     updateTimeline();
@@ -113,12 +113,16 @@ function updateTimeline() {
     document.getElementById("timeline").style = "margin-left: calc(50% - " + getStepPixelPosition(step) + "px);"
 }
 
-function togglePlay() {
-    playing = !playing
-    lastTick = 0;
+function stopAllNotes() {
     getOutputs().forEach(function (output) {
         output.stopNote("all");
     });
+}
+
+function togglePlay() {
+    playing = !playing
+    lastTick = 0;
+    stopAllNotes();
 }
 
 function toggleQuantize() {
@@ -133,9 +137,7 @@ function stop() {
     playing = false
     step = startMarker
     lastTick = 0
-    getOutputs().forEach(function (output) {
-        output.stopNote("all");
-    });
+    stopAllNotes();
     updateTimeline();
 }
 
@@ -163,6 +165,17 @@ function quantizeStep(setStep, multiple, mode) {
     }
 }
 
+function addTrackData(setStep, property, data) {
+    if (property === "pitchbend") {
+        trackData[currentTrack][property][setStep] = data
+    } else {
+        if (typeof trackData[currentTrack][property][setStep] == "undefined") {
+            trackData[currentTrack][property][setStep] = []
+        }
+        trackData[currentTrack][property][setStep] = Array.from(new Set(trackData[currentTrack][property][setStep].concat(data)))
+    }
+}
+
 function onNoteOn(event) {
     if (WebMidi.inputs[inputDevice].id !== event.target.id) {
         return;
@@ -172,10 +185,7 @@ function onNoteOn(event) {
         if (quantize) {
             setStep = quantizeStep(setStep, ppq / 2)
         }
-        if (typeof trackData[currentTrack].noteOn[setStep] == "undefined") {
-            trackData[currentTrack].noteOn[setStep] = []
-        }
-        trackData[currentTrack].noteOn[setStep].push(event.note.name + event.note.octave)
+        addTrackData(setStep, "noteOn", [event.note.name + event.note.octave])
         updateSegments();
     }
     getOutputs()[trackData[currentTrack].outputDevice].playNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
@@ -191,14 +201,11 @@ function onNoteOff(event) {
             newStep = quantizeStep(setStep, ppq / 2)
             // Prevent notes from being cut off by having the same start+end time.
             if (newStep < setStep) {
-                newStep = quantizeStep(setStep, ppq / 2, "ceil")
+                newStep = quantizeStep(setStep + (ppq/2), ppq / 2)
             }
             setStep = newStep
         }
-        if (typeof trackData[currentTrack].noteOff[setStep] == "undefined") {
-            trackData[currentTrack].noteOff[setStep] = []
-        }
-        trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
+        addTrackData(setStep, "noteOff", [event.note.name + event.note.octave])
         updateSegments();
     }
     getOutputs()[trackData[currentTrack].outputDevice].stopNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
@@ -291,6 +298,9 @@ function updateSegments() {
 }
 
 function addStartMarker() {
+    if (playing) {
+        return
+    }
     if (startMarker === step) {
         startMarker = 0;
         endMarker = 0;
@@ -303,11 +313,55 @@ function addStartMarker() {
 }
 
 function addEndMarker() {
+    if (playing) {
+        return
+    }
     if (endMarker === step) {
         endMarker = 0;
     } else if (startMarker < step) {
         endMarker = step;
     }
+}
+
+function deleteNotes() {
+    if (playing) {
+        return
+    }
+    if (endMarker > 0) {
+        for (var i=startMarker; i<=endMarker; ++i) {
+            if (typeof trackData[currentTrack].noteOn[i] !== "undefined") {
+                delete trackData[currentTrack].noteOn[i];
+            }
+            if (typeof trackData[currentTrack].noteOff[i] !== "undefined") {
+                delete trackData[currentTrack].noteOff[i];
+            }
+            if (typeof trackData[currentTrack].pitchbend[i] !== "undefined") {
+                delete trackData[currentTrack].pitchbend[i];
+            }
+        }
+        stopAllNotes();
+        updateSegments();
+    }
+}
+
+function paste() {
+    if (playing || endMarker === 0 || step === startMarker) {
+        return;
+    }
+    for (var i=startMarker; i<=endMarker; ++i) {
+        relativeStep = i - startMarker;
+        pasteStep = relativeStep + step;
+        if (typeof trackData[currentTrack].noteOn[i] !== "undefined") {
+            addTrackData(pasteStep, "noteOn", trackData[currentTrack].noteOn[i]);
+        }
+        if (typeof trackData[currentTrack].noteOff[i] !== "undefined") {
+            addTrackData(pasteStep, "noteOff", trackData[currentTrack].noteOff[i]);
+        }
+        if (typeof trackData[currentTrack].pitchbend[i] !== "undefined") {
+            addTrackData(pasteStep, "pitchbend", trackData[currentTrack].pitchbend[i]);
+        }
+    }
+    updateSegments();
 }
 
 var keysPressed = {};
@@ -429,7 +483,13 @@ document.addEventListener('keyup', function(event) {
             break;
         case "y":
             addEndMarker();
-            break;    
+            break;
+        case "Backspace":
+            deleteNotes();
+            break;
+        case "v":
+            paste();
+            break;
     }
     updateUI();
 });
