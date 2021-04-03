@@ -152,14 +152,14 @@ function getOutputs() {
 }
 
 function quantizeStep(setStep, multiple, mode) {
-    ceil = Math.ceil(setStep/multiple) * multiple;
-    floor = Math.floor(setStep/multiple) * multiple;
     if (mode === "ceil") {
-       return ceil;
+       return Math.ceil(setStep/multiple) * multiple;
     } else if (mode === "floor") {
-        return floor;
+        return Math.floor(setStep/multiple) * multiple;
     } else {
-        return Math.abs(setStep - ceil) < Math.abs(setStep - floor) ? ceil : floor;
+        newStep = setStep + multiple / 2;
+        newStep = newStep - (newStep % multiple);
+        return newStep;
     }
 }
 
@@ -191,7 +191,7 @@ function onNoteOff(event) {
             newStep = quantizeStep(setStep, ppq / 2)
             // Prevent notes from being cut off by having the same start+end time.
             if (newStep < setStep) {
-                newStep += (ppq / 2);
+                newStep = quantizeStep(setStep, ppq / 2, "ceil")
             }
             setStep = newStep
         }
@@ -284,7 +284,7 @@ function updateSegments() {
             segmentElem.classList = "timeline-segment";
             left = getStepPixelPosition(segment.firstStep)
             width = getStepPixelPosition(segment.lastStep) - left
-            segmentElem.style = `left: ${left}}px; width: ${width}px`;
+            segmentElem.style = `left: ${left}px; width: ${width}px`;
             document.getElementById(`track_${track_number}`).append(segmentElem);
         });
     });
