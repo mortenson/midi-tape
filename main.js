@@ -114,6 +114,10 @@ function toggleRecording() {
     recording = !recording
 }
 
+function changeTrack(track_number) {
+    currentTrack = track_number;
+}
+
 function getOutputs() {
     return WebMidi.outputs.concat([fakeOutput]);
 }
@@ -169,37 +173,40 @@ timer.onmessage = function(e) {
 
 
 setInterval(function () {
-    document.getElementById("track_1").innerHTML = "";
-    var segments = [];
-    for (var i in trackData[currentTrack].noteOn) {
-        for (var j in trackData[currentTrack].noteOff) {
-            if (j < i) {
-                continue;
-            }
-            sharedNotes = trackData[currentTrack].noteOn[i].filter(note => trackData[currentTrack].noteOff[j].includes(note));
-            if (sharedNotes.length > 0) {
-                segments.push({
-                    firstStep: i,
-                    lastStep: j,
-                });
-                break;
+    trackData.forEach(function (track, track_number) {
+        document.getElementById(`track_${track_number}`).innerHTML = "";
+        var segments = [];
+        for (var i of Object.keys(track.noteOn).sort()) {
+            for (var j of Object.keys(track.noteOff).sort()) {
+                if (j < i) {
+                    continue;
+                }
+                sharedNotes = track.noteOn[i].filter(note => track.noteOff[j].includes(note));
+                if (sharedNotes.length > 0) {
+                    segments.push({
+                        firstStep: i,
+                        lastStep: j,
+                    });
+                    break;
+                }
             }
         }
-    }
-    segments.forEach(function (segment) {
-        var segmentElem = document.createElement("div");
-        segmentElem.classList = "timeline-segment";
-        bar_width = 100;
-        pixel_per_note = bar_width / 4;
-        left = (segment.firstStep/ppq) * pixel_per_note
-        width = ((segment.lastStep/ppq) * pixel_per_note) - left
-        segmentElem.style = `left: ${left}px; width: ${width}px`;
-        document.getElementById("track_1").append(segmentElem);
+        segments.forEach(function (segment) {
+            var segmentElem = document.createElement("div");
+            segmentElem.classList = "timeline-segment";
+            bar_width = 100;
+            pixel_per_note = bar_width / 4;
+            left = (segment.firstStep/ppq) * pixel_per_note
+            width = ((segment.lastStep/ppq) * pixel_per_note) - left
+            segmentElem.style = `left: ${left}px; width: ${width}px`;
+            document.getElementById(`track_${track_number}`).append(segmentElem);
+        });
     });
     document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
     document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
     document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
+    document.getElementById("current-track").innerText = `Current track: ${currentTrack}`;
 }, 500);
 
 document.addEventListener('keydown', function(event) {
@@ -218,6 +225,12 @@ document.addEventListener('keydown', function(event) {
             break;
         case "q":
             toggleQuantize();
+            break;
+        case "0":
+        case "1":
+        case "2":
+        case "3":
+            changeTrack(parseInt(event.key));
             break;
     }
 });
