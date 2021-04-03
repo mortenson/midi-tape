@@ -57,3 +57,7 @@
     position: relative;
     margin-left: 1px;
 }
+
+#config > div {
+    margin-bottom: 10px;
+}

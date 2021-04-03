@@ -10,24 +10,30 @@ var trackData = [
     {
         noteOn: {},
         noteOff: {},
+        pitchbend: {},
     },
     {
         noteOn: {},
         noteOff: {},
+        pitchbend: {},
     },
     {
         noteOn: {},
         noteOff: {},
+        pitchbend: {},
     },
     {
         noteOn: {},
         noteOff: {},
+        pitchbend: {},
     },
 ];
 var outputs = [];
 var metronome = true;
 
+var pitchShifter = new Tone.PitchShift(0).toDestination();
 var synth = new Tone.PolySynth(Tone.Synth).toDestination();
+synth.connect(pitchShifter);
 var metronome_synth = new Tone.Synth().toDestination();
 
 fakeOutput = {
@@ -44,6 +50,10 @@ fakeOutput.stopNote = function(note_name, channel) {
     } else {
         synth.triggerRelease(note_name,  Tone.now())
     }
+}
+
+fakeOutput.sendPitchBend = function(value, channel) {
+    pitchShifter.pitch = value
 }
 
 function start() {
@@ -64,6 +74,9 @@ function tick() {
         trackData[currentTrack].noteOff[step].forEach(function (note) {
             getOutputs()[1].stopNote(note, 1);
         })
+    }
+    if (typeof trackData[currentTrack].pitchbend[step] !== "undefined") {
+        getOutputs()[1].sendPitchBend(trackData[currentTrack].pitchbend[step], 1)
     }
     if (metronome) {
         if (step % (ppq*4) === 0) {
@@ -153,7 +166,7 @@ WebMidi.enable((err) => {
                 newStep = quantizeStep(setStep)
                 // Prevent notes from being cut off by having the same start+end time.
                 if (newStep < setStep) {
-                    newStep += ppq;
+                    newStep += (ppq / 2);
                 }
                 setStep = newStep
             }
@@ -163,6 +176,10 @@ WebMidi.enable((err) => {
             trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
         }
         getOutputs()[1].stopNote(event.note.name + event.note.octave, event.channel);
+    });
+    WebMidi.inputs[0].addListener("pitchbend", "all", function (event) {
+        getOutputs()[1].sendPitchBend(event.value, event.channel);
+        trackData[currentTrack].pitchbend[step] = event.value
     });
 });
 
@@ -206,7 +223,7 @@ setInterval(function () {
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
     document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
     document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
-    document.getElementById("current-track").innerText = `Current track: ${currentTrack}`;
+    document.getElementById("current-track").innerText = `Current track: ${currentTrack+1}`;
 }, 500);
 
 document.addEventListener('keydown', function(event) {
@@ -226,11 +243,11 @@ document.addEventListener('keydown', function(event) {
         case "q":
             toggleQuantize();
             break;
-        case "0":
         case "1":
         case "2":
         case "3":
-            changeTrack(parseInt(event.key));
+        case "4":
+            changeTrack(parseInt(event.key)-1);
             break;
     }
 });
