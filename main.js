@@ -52,8 +52,12 @@ fakeOutput = {
     "name": "Fake Synth",
 }
 
-fakeOutput.playNote = function(note_name, channel) {
-    synth.triggerAttack(note_name,  Tone.now())
+fakeOutput.playNote = function(note_name, channel, options) {
+    velocity = 1
+    if ("velocity"in options) {
+        velocity = options.velocity
+    }
+    synth.triggerAttack(note_name, Tone.now(), velocity)
 }
 
 fakeOutput.stopNote = function(note_name, channel) {
@@ -79,9 +83,11 @@ function tick() {
     }
     trackData.forEach(function (track) {
         if (typeof track.noteOn[step] !== "undefined") {
-            track.noteOn[step].forEach(function (note) {
-                getOutputs()[track.outputDevice].playNote(note, track.outputChannel);
-            })
+            for (var note in track.noteOn[step]) {
+                getOutputs()[track.outputDevice].playNote(note, track.outputChannel, {
+                    velocity: track.noteOn[step][note],
+                });
+            }
         }
         if (typeof track.noteOff[step] !== "undefined") {
             track.noteOff[step].forEach(function (note) {
@@ -104,6 +110,7 @@ function tick() {
     }
     step++
     if (endMarker !== 0 && endMarker < step) {
+        stopAllNotes();
         step = startMarker;
     }
     updateTimeline();
@@ -166,13 +173,20 @@ function quantizeStep(setStep, multiple, mode) {
 }
 
 function addTrackData(setStep, property, data) {
-    if (property === "pitchbend") {
-        trackData[currentTrack][property][setStep] = data
-    } else {
+    if (Array.isArray(data)) {
         if (typeof trackData[currentTrack][property][setStep] == "undefined") {
             trackData[currentTrack][property][setStep] = []
         }
         trackData[currentTrack][property][setStep] = Array.from(new Set(trackData[currentTrack][property][setStep].concat(data)))
+    } else if (typeof data === "object") {
+        if (typeof trackData[currentTrack][property][setStep] == "undefined") {
+            trackData[currentTrack][property][setStep] = {}
+        }
+        for (var note in data) {
+            trackData[currentTrack][property][setStep][note] = data[note];
+        }
+    } else {
+        trackData[currentTrack][property][setStep] = data
     }
 }
 
@@ -185,10 +199,12 @@ function onNoteOn(event) {
         if (quantize) {
             setStep = quantizeStep(setStep, ppq / 2)
         }
-        addTrackData(setStep, "noteOn", [event.note.name + event.note.octave])
+        addTrackData(setStep, "noteOn", {[event.note.name + event.note.octave]: event.velocity})
         updateSegments();
     }
-    getOutputs()[trackData[currentTrack].outputDevice].playNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
+    getOutputs()[trackData[currentTrack].outputDevice].playNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel, {
+        velocity: event.velocity,
+    });
 }
 
 function onNoteOff(event) {
@@ -276,7 +292,7 @@ function updateSegments() {
                 if (j < i) {
                     continue;
                 }
-                sharedNotes = track.noteOn[i].filter(note => track.noteOff[j].includes(note));
+                sharedNotes = track.noteOff[j].filter(note => note in track.noteOn[i]);
                 if (sharedNotes.length > 0) {
                     segments.push({
                         firstStep: i,
@@ -324,9 +340,6 @@ function addEndMarker() {
 }
 
 function deleteNotes() {
-    if (playing) {
-        return
-    }
     if (endMarker > 0) {
         for (var i=startMarker; i<=endMarker; ++i) {
             if (typeof trackData[currentTrack].noteOn[i] !== "undefined") {
