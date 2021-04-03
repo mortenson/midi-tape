@@ -397,6 +397,9 @@ function paste() {
         if (typeof trackData[currentTrack].pitchbend[i] !== "undefined") {
             addTrackData(pasteStep, "pitchbend", trackData[currentTrack].pitchbend[i]);
         }
+        if (typeof trackData[currentTrack].controlchange[i] !== "undefined") {
+            addTrackData(pasteStep, "controlchange", trackData[currentTrack].controlchange[i]);
+        }
     }
     updateSegments();
 }
