@@ -74,19 +74,21 @@ function tick() {
     if (!playing) {
         return
     }
-    if (typeof trackData[currentTrack].noteOn[step] !== "undefined") {
-        trackData[currentTrack].noteOn[step].forEach(function (note) {
-            getOutputs()[trackData[currentTrack].outputDevice].playNote(note, trackData[currentTrack].outputChannel);
-        })
-    }
-    if (typeof trackData[currentTrack].noteOff[step] !== "undefined") {
-        trackData[currentTrack].noteOff[step].forEach(function (note) {
-            getOutputs()[trackData[currentTrack].outputDevice].stopNote(note, trackData[currentTrack].outputChannel);
-        })
-    }
-    if (typeof trackData[currentTrack].pitchbend[step] !== "undefined") {
-        getOutputs()[trackData[currentTrack].outputDevice].sendPitchBend(trackData[currentTrack].pitchbend[step], trackData[currentTrack].outputChannel)
-    }
+    trackData.forEach(function (track) {
+        if (typeof track.noteOn[step] !== "undefined") {
+            track.noteOn[step].forEach(function (note) {
+                getOutputs()[track.outputDevice].playNote(note, track.outputChannel);
+            })
+        }
+        if (typeof track.noteOff[step] !== "undefined") {
+            track.noteOff[step].forEach(function (note) {
+                getOutputs()[track.outputDevice].stopNote(note, track.outputChannel);
+            })
+        }
+        if (typeof track.pitchbend[step] !== "undefined") {
+            getOutputs()[track.outputDevice].sendPitchBend(track.pitchbend[step], track.outputChannel)
+        }
+    });
     if (metronome) {
         if (step % (ppq*4) === 0) {
             metronome_synth.triggerAttackRelease("C4", .1);
@@ -138,17 +140,6 @@ function toggleRecording() {
 
 function changeTrack(track_number) {
     currentTrack = track_number;
-}
-
-function changeOutputDevice() {
-    trackData[currentTrack].outputDevice = (trackData[currentTrack].outputDevice+1) % getOutputs().length
-}
-
-function changeOutputChannel() {
-    trackData[currentTrack].outputChannel++
-    if (trackData[currentTrack].outputChannel > 16) {
-        trackData[currentTrack].outputChannel = 1
-    }
 }
 
 function getOutputs() {
@@ -223,12 +214,14 @@ timer.onmessage = function(e) {
 }
 
 setInterval(function () {
+    document.body.classList = recording ? "recording" : "";
     document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
     document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
     document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
     document.getElementById("current-track").innerText = `Current track: ${currentTrack+1}`;
     trackData.forEach(function (track, index) {
+        document.getElementById(`track_${index}`).classList = index === currentTrack ? 'track current-track' : 'track';
         document.getElementById(`output-device-${index}`).innerText = `Track ${index+1} device: ${getOutputs()[track.outputDevice].name} (${track.outputChannel})`
     });
     document.getElementById("input-device").innerText = `Input device: ${WebMidi.inputs[inputDevice].name}`
@@ -238,8 +231,8 @@ setInterval(function () {
     trackData.forEach(function (track, track_number) {
         document.getElementById(`track_${track_number}`).innerHTML = "";
         var segments = [];
-        for (var i of Object.keys(track.noteOn).sort()) {
-            for (var j of Object.keys(track.noteOff).sort()) {
+        for (var i of Object.keys(track.noteOn).map(Number).sort((a, b) => a - b)) {
+            for (var j of Object.keys(track.noteOff).map(Number).sort((a, b) => a - b)) {
                 if (j < i) {
                     continue;
                 }
@@ -266,8 +259,57 @@ setInterval(function () {
     });
 }, 500);
 
-document.addEventListener('keydown', function(event) {
+var keysPressed = {};
+
+document.addEventListener('keydown', (event) => {
+    keysPressed[event.key] = true;
+});
+
+document.addEventListener('keyup', function(event) {
+    delete keysPressed[event.key];
+    trackKey = false;
+    if ("1" in keysPressed) {
+        trackKey = 0;
+    } else if ("2" in keysPressed) {
+        trackKey = 1;
+    } else if ("3" in keysPressed) {
+        trackKey = 2;
+    } else if ("4" in keysPressed) {
+        trackKey = 3;
+    }
     switch (event.key) {
+        case "ArrowUp":
+            if (trackKey !== false) {
+                trackData[trackKey].outputDevice++
+                if (trackData[trackKey].outputDevice >= getOutputs().length) {
+                    trackData[trackKey].outputDevice = 0
+                }
+            }
+            break;
+        case "ArrowDown":
+            if (trackKey !== false) {
+                trackData[trackKey].outputDevice--
+                if (trackData[trackKey].outputDevice < 0) {
+                    trackData[trackKey].outputDevice = getOutputs().length-1
+                }
+            }
+            break;
+        case "ArrowRight":
+            if (trackKey !== false) {
+                trackData[trackKey].outputChannel++
+                if (trackData[trackKey].outputChannel > 16) {
+                    trackData[trackKey].outputChannel = 1
+                }
+            }
+            break;
+        case "ArrowLeft":
+            if (trackKey !== false) {
+                trackData[trackKey].outputChannel--
+                if (trackData[trackKey].outputChannel <= 0) {
+                    trackData[trackKey].outputChannel = 16
+                }
+            }
+            break;
         case "p":
             togglePlay();
             break;
@@ -287,13 +329,9 @@ document.addEventListener('keydown', function(event) {
         case "2":
         case "3":
         case "4":
-            changeTrack(parseInt(event.key)-1);
-            break;
-        case "d":
-            changeOutputDevice();
-            break;
-        case "f":
-            changeOutputChannel();
+            if (true) {
+                changeTrack(parseInt(event.key)-1);
+            }
             break;
     }
 });
