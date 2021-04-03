@@ -6,23 +6,32 @@ var recording = false
 var quantize = false
 var step = 0;
 var currentTrack = 0;
+var inputDevice = 0;
 var trackData = [
     {
+        outputDevice: 1,
+        outputChannel: 1,
         noteOn: {},
         noteOff: {},
         pitchbend: {},
     },
     {
+        outputDevice: 1,
+        outputChannel: 1,
         noteOn: {},
         noteOff: {},
         pitchbend: {},
     },
     {
+        outputDevice: 1,
+        outputChannel: 1,
         noteOn: {},
         noteOff: {},
         pitchbend: {},
     },
     {
+        outputDevice: 1,
+        outputChannel: 1,
         noteOn: {},
         noteOff: {},
         pitchbend: {},
@@ -37,7 +46,7 @@ synth.connect(pitchShifter);
 var metronome_synth = new Tone.Synth().toDestination();
 
 fakeOutput = {
-    "name": "fakeOutput",
+    "name": "Fake Synth",
 }
 
 fakeOutput.playNote = function(note_name, channel) {
@@ -67,16 +76,16 @@ function tick() {
     }
     if (typeof trackData[currentTrack].noteOn[step] !== "undefined") {
         trackData[currentTrack].noteOn[step].forEach(function (note) {
-            getOutputs()[1].playNote(note, 1);
+            getOutputs()[trackData[currentTrack].outputDevice].playNote(note, trackData[currentTrack].outputChannel);
         })
     }
     if (typeof trackData[currentTrack].noteOff[step] !== "undefined") {
         trackData[currentTrack].noteOff[step].forEach(function (note) {
-            getOutputs()[1].stopNote(note, 1);
+            getOutputs()[trackData[currentTrack].outputDevice].stopNote(note, trackData[currentTrack].outputChannel);
         })
     }
     if (typeof trackData[currentTrack].pitchbend[step] !== "undefined") {
-        getOutputs()[1].sendPitchBend(trackData[currentTrack].pitchbend[step], 1)
+        getOutputs()[trackData[currentTrack].outputDevice].sendPitchBend(trackData[currentTrack].pitchbend[step], trackData[currentTrack].outputChannel)
     }
     if (metronome) {
         if (step % (ppq*4) === 0) {
@@ -94,7 +103,7 @@ function tick() {
     quarter_notes = step/ppq;
     progress = quarter_notes * pixel_per_note;
     document.getElementById("timeline").style = "margin-left: calc(50% - " + progress + "px);"
-    step_display.innerText = step
+    document.getElementById('step-display').innerText = step
 }
 
 function togglePlay() {
@@ -131,6 +140,17 @@ function changeTrack(track_number) {
     currentTrack = track_number;
 }
 
+function changeOutputDevice() {
+    trackData[currentTrack].outputDevice = (trackData[currentTrack].outputDevice+1) % getOutputs().length
+}
+
+function changeOutputChannel() {
+    trackData[currentTrack].outputChannel++
+    if (trackData[currentTrack].outputChannel > 16) {
+        trackData[currentTrack].outputChannel = 1
+    }
+}
+
 function getOutputs() {
     return WebMidi.outputs.concat([fakeOutput]);
 }
@@ -142,44 +162,58 @@ function quantizeStep(setStep) {
     return setStep;
 }
 
-WebMidi.enable((err) => {
-    console.log(getOutputs());
-    console.log(WebMidi.inputs);
+function onNoteOn(event) {
+    if (WebMidi.inputs[inputDevice].id !== event.target.id) {
+        return;
+    }
+    if (playing && recording) {
+        setStep = step;
+        if (quantize) {
+            setStep = quantizeStep(setStep)
+        }
+        if (typeof trackData[currentTrack].noteOn[setStep] == "undefined") {
+            trackData[currentTrack].noteOn[setStep] = []
+        }
+        trackData[currentTrack].noteOn[setStep].push(event.note.name + event.note.octave)
+    }
+    getOutputs()[trackData[currentTrack].outputDevice].playNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
+}
 
-    WebMidi.inputs[0].addListener("noteon", "all", function (event) {
-        if (playing && recording) {
-            setStep = step;
-            if (quantize) {
-                setStep = quantizeStep(setStep)
+function onNoteOff(event) {
+    if (WebMidi.inputs[inputDevice].id !== event.target.id) {
+        return;
+    }
+    if (playing && recording) {
+        setStep = step;
+        if (quantize) {
+            newStep = quantizeStep(setStep)
+            // Prevent notes from being cut off by having the same start+end time.
+            if (newStep < setStep) {
+                newStep += (ppq / 2);
             }
-            if (typeof trackData[currentTrack].noteOn[setStep] == "undefined") {
-                trackData[currentTrack].noteOn[setStep] = []
-            }
-            trackData[currentTrack].noteOn[setStep].push(event.note.name + event.note.octave)
+            setStep = newStep
         }
-        getOutputs()[1].playNote(event.note.name + event.note.octave, event.channel);
-    });
-    WebMidi.inputs[0].addListener("noteoff", "all", function (event) {
-        if (playing && recording) {
-            setStep = step;
-            if (quantize) {
-                newStep = quantizeStep(setStep)
-                // Prevent notes from being cut off by having the same start+end time.
-                if (newStep < setStep) {
-                    newStep += (ppq / 2);
-                }
-                setStep = newStep
-            }
-            if (typeof trackData[currentTrack].noteOff[setStep] == "undefined") {
-                trackData[currentTrack].noteOff[setStep] = []
-            }
-            trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
+        if (typeof trackData[currentTrack].noteOff[setStep] == "undefined") {
+            trackData[currentTrack].noteOff[setStep] = []
         }
-        getOutputs()[1].stopNote(event.note.name + event.note.octave, event.channel);
-    });
-    WebMidi.inputs[0].addListener("pitchbend", "all", function (event) {
-        getOutputs()[1].sendPitchBend(event.value, event.channel);
-        trackData[currentTrack].pitchbend[step] = event.value
+        trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
+    }
+    getOutputs()[trackData[currentTrack].outputDevice].stopNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
+}
+
+function onPitchBend(event) {
+    if (WebMidi.inputs[inputDevice].id !== event.target.id) {
+        return;
+    }
+    trackData[currentTrack].pitchbend[step] = event.value
+    getOutputs()[trackData[currentTrack].outputDevice].sendPitchBend(event.value, trackData[currentTrack].outputChannel);
+}
+
+WebMidi.enable((err) => {
+    WebMidi.inputs.forEach(function (input, key) {
+        input.addListener("noteon", "all", onNoteOn);
+        input.addListener("noteoff", "all", onNoteOff);
+        input.addListener("pitchbend", "all", onPitchBend);
     });
 });
 
@@ -188,6 +222,17 @@ timer.onmessage = function(e) {
     tick();
 }
 
+setInterval(function () {
+    document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
+    document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
+    document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
+    document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
+    document.getElementById("current-track").innerText = `Current track: ${currentTrack+1}`;
+    trackData.forEach(function (track, index) {
+        document.getElementById(`output-device-${index}`).innerText = `Track ${index+1} device: ${getOutputs()[track.outputDevice].name} (${track.outputChannel})`
+    });
+    document.getElementById("input-device").innerText = `Input device: ${WebMidi.inputs[inputDevice].name}`
+}, 100);
 
 setInterval(function () {
     trackData.forEach(function (track, track_number) {
@@ -219,11 +264,6 @@ setInterval(function () {
             document.getElementById(`track_${track_number}`).append(segmentElem);
         });
     });
-    document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
-    document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
-    document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
-    document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
-    document.getElementById("current-track").innerText = `Current track: ${currentTrack+1}`;
 }, 500);
 
 document.addEventListener('keydown', function(event) {
@@ -248,6 +288,12 @@ document.addEventListener('keydown', function(event) {
         case "3":
         case "4":
             changeTrack(parseInt(event.key)-1);
+            break;
+        case "d":
+            changeOutputDevice();
+            break;
+        case "f":
+            changeOutputChannel();
             break;
     }
 });
