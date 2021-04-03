@@ -2,11 +2,14 @@ var ppq = 120;
 var bpm = 110;
 var lastTick = 0;
 var playing = false
-var recording = false
+var recording = true
 var quantize = false
 var step = 0;
 var currentTrack = 0;
 var inputDevice = 0;
+var midiReady = false;
+var startMarker = 0;
+var endMarker = 0;
 var trackData = [
     {
         outputDevice: 1,
@@ -100,12 +103,14 @@ function tick() {
         lastTick = performance.now();
     }
     step++
-    bar_width = 100;
-    pixel_per_note = bar_width / 4;
-    quarter_notes = step/ppq;
-    progress = quarter_notes * pixel_per_note;
-    document.getElementById("timeline").style = "margin-left: calc(50% - " + progress + "px);"
-    document.getElementById('step-display').innerText = step
+    if (endMarker !== 0 && endMarker <= step) {
+        step = startMarker;
+    }
+    updateTimeline();
+}
+
+function updateTimeline() {
+    document.getElementById("timeline").style = "margin-left: calc(50% - " + getStepPixelPosition(step) + "px);"
 }
 
 function togglePlay() {
@@ -126,12 +131,12 @@ function toggleMetronome() {
 
 function stop() {
     playing = false
-    step = 0
+    step = startMarker
     lastTick = 0
     getOutputs().forEach(function (output) {
         output.stopNote("all");
     });
-    document.getElementById("timeline").style = "margin-left: calc(50%);"
+    updateTimeline();
 }
 
 function toggleRecording() {
@@ -146,11 +151,16 @@ function getOutputs() {
     return WebMidi.outputs.concat([fakeOutput]);
 }
 
-function quantizeStep(setStep) {
-    multiple = ppq / 2
-    newStep = setStep + multiple / 2;
-    newStep = newStep - (newStep % multiple);
-    return setStep;
+function quantizeStep(setStep, multiple, mode) {
+    ceil = Math.ceil(setStep/multiple) * multiple;
+    floor = Math.floor(setStep/multiple) * multiple;
+    if (mode === "ceil") {
+       return ceil;
+    } else if (mode === "floor") {
+        return floor;
+    } else {
+        return Math.abs(setStep - ceil) < Math.abs(setStep - floor) ? ceil : floor;
+    }
 }
 
 function onNoteOn(event) {
@@ -160,12 +170,13 @@ function onNoteOn(event) {
     if (playing && recording) {
         setStep = step;
         if (quantize) {
-            setStep = quantizeStep(setStep)
+            setStep = quantizeStep(setStep, ppq / 2)
         }
         if (typeof trackData[currentTrack].noteOn[setStep] == "undefined") {
             trackData[currentTrack].noteOn[setStep] = []
         }
         trackData[currentTrack].noteOn[setStep].push(event.note.name + event.note.octave)
+        updateSegments();
     }
     getOutputs()[trackData[currentTrack].outputDevice].playNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
 }
@@ -177,7 +188,7 @@ function onNoteOff(event) {
     if (playing && recording) {
         setStep = step;
         if (quantize) {
-            newStep = quantizeStep(setStep)
+            newStep = quantizeStep(setStep, ppq / 2)
             // Prevent notes from being cut off by having the same start+end time.
             if (newStep < setStep) {
                 newStep += (ppq / 2);
@@ -188,6 +199,7 @@ function onNoteOff(event) {
             trackData[currentTrack].noteOff[setStep] = []
         }
         trackData[currentTrack].noteOff[setStep].push(event.note.name + event.note.octave)
+        updateSegments();
     }
     getOutputs()[trackData[currentTrack].outputDevice].stopNote(event.note.name + event.note.octave, trackData[currentTrack].outputChannel);
 }
@@ -196,11 +208,16 @@ function onPitchBend(event) {
     if (WebMidi.inputs[inputDevice].id !== event.target.id) {
         return;
     }
-    trackData[currentTrack].pitchbend[step] = event.value
+    if (playing && recording) {
+        trackData[currentTrack].pitchbend[step] = event.value
+        updateSegments();
+    }
     getOutputs()[trackData[currentTrack].outputDevice].sendPitchBend(event.value, trackData[currentTrack].outputChannel);
 }
 
 WebMidi.enable((err) => {
+    midiReady = true;
+    updateUI();
     WebMidi.inputs.forEach(function (input, key) {
         input.addListener("noteon", "all", onNoteOn);
         input.addListener("noteoff", "all", onNoteOff);
@@ -213,7 +230,13 @@ timer.onmessage = function(e) {
     tick();
 }
 
-setInterval(function () {
+function getStepPixelPosition(step) {
+    bar_width = 100;
+    pixel_per_note = bar_width / 4;
+    return (step/ppq) * pixel_per_note
+}
+
+function updateUI() {
     document.body.classList = recording ? "recording" : "";
     document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
@@ -225,9 +248,19 @@ setInterval(function () {
         document.getElementById(`output-device-${index}`).innerText = `Track ${index+1} device: ${getOutputs()[track.outputDevice].name} (${track.outputChannel})`
     });
     document.getElementById("input-device").innerText = `Input device: ${WebMidi.inputs[inputDevice].name}`
-}, 100);
+    if (startMarker > 0) {
+        document.getElementById("timeline-start-marker").style = `left: ${getStepPixelPosition(startMarker)}px; display: block;`;
+    } else {
+        document.getElementById("timeline-start-marker").style = "";
+    }
+    if (endMarker > 0) {
+        document.getElementById("timeline-end-marker").style = `left: ${getStepPixelPosition(endMarker)}px; display: block;`;
+    } else {
+        document.getElementById("timeline-end-marker").style = "";
+    }
+}
 
-setInterval(function () {
+function updateSegments() {
     trackData.forEach(function (track, track_number) {
         document.getElementById(`track_${track_number}`).innerHTML = "";
         var segments = [];
@@ -249,23 +282,76 @@ setInterval(function () {
         segments.forEach(function (segment) {
             var segmentElem = document.createElement("div");
             segmentElem.classList = "timeline-segment";
-            bar_width = 100;
-            pixel_per_note = bar_width / 4;
-            left = (segment.firstStep/ppq) * pixel_per_note
-            width = ((segment.lastStep/ppq) * pixel_per_note) - left
-            segmentElem.style = `left: ${left}px; width: ${width}px`;
+            left = getStepPixelPosition(segment.firstStep)
+            width = getStepPixelPosition(segment.lastStep) - left
+            segmentElem.style = `left: ${left}}px; width: ${width}px`;
             document.getElementById(`track_${track_number}`).append(segmentElem);
         });
     });
-}, 500);
+}
+
+function addStartMarker() {
+    if (startMarker === step) {
+        startMarker = 0;
+        endMarker = 0;
+    } else {
+        startMarker = step;
+    }
+    if (startMarker > endMarker) {
+        endMarker = 0;
+    }
+}
+
+function addEndMarker() {
+    if (endMarker === step) {
+        endMarker = 0;
+    } else if (startMarker < step) {
+        endMarker = step;
+    }
+}
 
 var keysPressed = {};
+var arrowTrackChange = false;
+var trackKey = false;
 
 document.addEventListener('keydown', (event) => {
+    if (!midiReady) {
+        return;
+    }
     keysPressed[event.key] = true;
+    switch (event.key) {
+        case "ArrowRight":
+            if (trackKey === false && !playing) {
+                if ("Shift" in keysPressed) {
+                    step += 1
+                    step = quantizeStep(step, ppq * 4, "ceil")
+                } else {
+                    step += 10;
+                }
+                updateTimeline();
+            }
+            break;
+        case "ArrowLeft":
+            if (trackKey === false && !playing) {
+                if ("Shift" in keysPressed) {
+                    step -= 1
+                    step = quantizeStep(step, ppq * 4, "floor")
+                } else {
+                    step -= 10;
+                }
+                if (step < 0) {
+                    step = 0;
+                }
+                updateTimeline();
+            }
+            break;
+    }
 });
 
 document.addEventListener('keyup', function(event) {
+    if (!midiReady) {
+        return;
+    }
     delete keysPressed[event.key];
     trackKey = false;
     if ("1" in keysPressed) {
@@ -284,6 +370,7 @@ document.addEventListener('keyup', function(event) {
                 if (trackData[trackKey].outputDevice >= getOutputs().length) {
                     trackData[trackKey].outputDevice = 0
                 }
+                arrowTrackChange = true;
             }
             break;
         case "ArrowDown":
@@ -292,6 +379,7 @@ document.addEventListener('keyup', function(event) {
                 if (trackData[trackKey].outputDevice < 0) {
                     trackData[trackKey].outputDevice = getOutputs().length-1
                 }
+                arrowTrackChange = true;
             }
             break;
         case "ArrowRight":
@@ -300,6 +388,7 @@ document.addEventListener('keyup', function(event) {
                 if (trackData[trackKey].outputChannel > 16) {
                     trackData[trackKey].outputChannel = 1
                 }
+                arrowTrackChange = true;
             }
             break;
         case "ArrowLeft":
@@ -308,6 +397,7 @@ document.addEventListener('keyup', function(event) {
                 if (trackData[trackKey].outputChannel <= 0) {
                     trackData[trackKey].outputChannel = 16
                 }
+                arrowTrackChange = true;
             }
             break;
         case "p":
@@ -329,9 +419,17 @@ document.addEventListener('keyup', function(event) {
         case "2":
         case "3":
         case "4":
-            if (true) {
+            if (!arrowTrackChange) {
                 changeTrack(parseInt(event.key)-1);
             }
+            arrowTrackChange = false;
             break;
+        case "t":
+            addStartMarker();
+            break;
+        case "y":
+            addEndMarker();
+            break;    
     }
+    updateUI();
 });
