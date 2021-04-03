@@ -17,6 +17,7 @@ var trackData = [
         noteOn: {},
         noteOff: {},
         pitchbend: {},
+        controlchange: {},
     },
     {
         outputDevice: 1,
@@ -24,6 +25,7 @@ var trackData = [
         noteOn: {},
         noteOff: {},
         pitchbend: {},
+        controlchange: {},
     },
     {
         outputDevice: 1,
@@ -31,6 +33,7 @@ var trackData = [
         noteOn: {},
         noteOff: {},
         pitchbend: {},
+        controlchange: {},
     },
     {
         outputDevice: 1,
@@ -38,6 +41,7 @@ var trackData = [
         noteOn: {},
         noteOff: {},
         pitchbend: {},
+        controlchange: {},
     },
 ];
 var outputs = [];
@@ -72,6 +76,8 @@ fakeOutput.sendPitchBend = function(value, channel) {
     pitchShifter.pitch = value
 }
 
+fakeOutput.sendControlChange = function(name, value) {}
+
 function start() {
     Tone.start();
     document.getElementById("start_button").remove();
@@ -96,6 +102,11 @@ function tick() {
         }
         if (typeof track.pitchbend[step] !== "undefined") {
             getOutputs()[track.outputDevice].sendPitchBend(track.pitchbend[step], track.outputChannel)
+        }
+        if (typeof track.controlchange[step] !== "undefined") {
+            for (var name in track.controlchange[step]) {
+                getOutputs()[track.outputDevice].sendControlChange(name, track.controlchange[step][name], track.outputChannel);
+            }
         }
     });
     if (metronome) {
@@ -233,9 +244,18 @@ function onPitchBend(event) {
     }
     if (playing && recording) {
         trackData[currentTrack].pitchbend[step] = event.value
-        updateSegments();
     }
     getOutputs()[trackData[currentTrack].outputDevice].sendPitchBend(event.value, trackData[currentTrack].outputChannel);
+}
+
+function onControlChange(event) {
+    if (WebMidi.inputs[inputDevice].id !== event.target.id) {
+        return;
+    }
+    if (playing && recording) {
+        addTrackData(step, "controlchange", {[event.controller.name]: event.value})
+    }
+    getOutputs()[trackData[currentTrack].outputDevice].sendControlChange(event.controller.name, event.value, trackData[currentTrack].outputChannel);
 }
 
 WebMidi.enable((err) => {
@@ -245,6 +265,7 @@ WebMidi.enable((err) => {
         input.addListener("noteon", "all", onNoteOn);
         input.addListener("noteoff", "all", onNoteOff);
         input.addListener("pitchbend", "all", onPitchBend);
+        input.addListener("controlchange", "all", onControlChange);
     });
 });
 
@@ -350,6 +371,9 @@ function deleteNotes() {
             }
             if (typeof trackData[currentTrack].pitchbend[i] !== "undefined") {
                 delete trackData[currentTrack].pitchbend[i];
+            }
+            if (typeof trackData[currentTrack].controlchange[i] !== "undefined") {
+                delete trackData[currentTrack].controlchange[i];
             }
         }
         stopAllNotes();
