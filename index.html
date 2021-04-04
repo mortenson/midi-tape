@@ -2,6 +2,7 @@
   <head>
     <script src="lib/webmidi.min.js"></script>
     <script src="lib/Tone.js"></script>
+    <script src="lib/localforage.min.js"></script>
     <script src="main.js"></script>
     <link rel="stylesheet" href="main.css" />
   </head>
@@ -34,8 +35,17 @@
       <div id="output-device-2">Track 3 device:</div>
       <div id="output-device-3">Track 4 device:</div>
     </div>
-    <button onclick="enableWebAudio()" id="start_button">
+    <button onclick="enableWebAudio()">
       Enable WebAudio
+    </button>
+    <button onclick="wipeTape()">
+      Wipe tape
+    </button>
+    <button onclick="save()">
+      Save
+    </button>
+    <button onclick="load()">
+      Load
     </button>
   </body>
 </html>

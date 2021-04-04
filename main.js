@@ -18,6 +18,7 @@ const timer = new Worker("timer.js");
 let keysPressed = {};
 let arrowTrackChange = false;
 let trackKey = false;
+let lockTape = true;
 
 // A tape is data that should persist.
 let tape = {
@@ -178,7 +179,7 @@ function getOutputDevice(trackNumber) {
   if (i > getOutputs().length) {
     i = 0;
   }
-  return getOutputs()[tape.tracks[trackNumber].outputDevice];
+  return getOutputs()[tape.tracks[i].outputDevice];
 }
 
 function quantizeStep(setStep, multiple, mode) {
@@ -458,6 +459,46 @@ function paste() {
   renderSegments();
 }
 
+function storeTape() {
+  localforage.setItem("tape", tape);
+}
+
+function wipeTape() {
+  lockTape = true;
+  localforage.clear().then(function () {
+    location.reload();
+  });
+}
+
+function save() {
+  lockTape = true;
+  const element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(tape, null, 2)));
+  element.setAttribute('download', "midi-tape.json");
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+  lockTape = false;
+}
+
+function load() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.onchange = function (event) {
+    lockTape = false;
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      lockTape = true;
+      tape = JSON.parse(event.target.result);
+      storeTape();
+      location.reload();
+    };
+    reader.readAsText(event.target.files[0]);
+  };
+  input.click();
+}
+
 document.addEventListener("keydown", (event) => {
   if (!midiReady) {
     return;
@@ -707,6 +748,22 @@ function renderTimeline() {
 }
 
 // Init code.
+
+setInterval(function () {
+  if (!lockTape) {
+    storeTape();
+  }
+}, 500);
+
+localforage.getItem('tape').then(function(value) {
+  if (value) {
+    tape = value;
+    renderSegments();
+    renderTimeline();
+    renderStatus();
+  }
+  lockTape = false;
+});
 
 timer.onmessage = (event) => {
   tick();

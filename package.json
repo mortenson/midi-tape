@@ -6,11 +6,12 @@
   "scripts": {
     "start": "http-server -c-1 .",
     "prettier": "prettier --write *.html *.js *.css",
-    "copy": "cp node_modules/webmidi/webmidi.min.js lib/webmidi.min.js && cp node_modules/tone/build/Tone.js lib/Tone.js"
+    "build-assets": "cp node_modules/localforage/dist/localforage.min.js lib && cp node_modules/webmidi/webmidi.min.js lib && cp node_modules/tone/build/Tone.js lib"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "localforage": "^1.9.0",
     "tone": "^14.7.77",
     "webmidi": "^2.5.2"
   },
