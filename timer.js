@@ -22,5 +22,5 @@ tick();
 onmessage = function(e) {
     ppq = e.data.ppq;
     bpm = e.data.bpm;
-    tickrate = 60000 / (bpm * ppq);
+    tickRate = 60000 / (bpm * ppq);
 }

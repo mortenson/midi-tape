@@ -299,6 +299,7 @@ function getStepPixelPosition(step) {
 
 function updateUI() {
     document.body.classList = recording ? "recording" : "";
+    document.getElementById("bpm-status").innerText = bpm + " BPM";
     document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
     document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
@@ -482,6 +483,12 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+function updateBpm(newBpm) {
+    bpm = newBpm;
+    timer.postMessage({bpm, ppq});
+    updateUI();
+}
+
 document.addEventListener('keyup', function(event) {
     if (!midiReady) {
         return;
@@ -513,6 +520,12 @@ document.addEventListener('keyup', function(event) {
                 if (inputDevice >= WebMidi.inputs.length) {
                     inputDevice = 0
                 }
+            } else {
+                offset = 1;
+                if ("Shift" in keysPressed) {
+                    offset = 10;
+                }
+                updateBpm(bpm + offset)
             }
             break;
         case "ArrowDown":
@@ -527,6 +540,12 @@ document.addEventListener('keyup', function(event) {
                 if (inputDevice < 0) {
                     inputDevice = WebMidi.inputs.length-1;
                 }
+            } else {
+                offset = 1;
+                if ("Shift" in keysPressed) {
+                    offset = 10;
+                }
+                updateBpm(bpm - offset)
             }
             break;
         case "ArrowRight":
