@@ -77,6 +77,8 @@ fakeOutput.sendPitchBend = function(value, channel) {
 
 fakeOutput.sendControlChange = function(name, value) {}
 
+fakeOutput.sendClock = function () {}
+
 function start() {
     Tone.start();
     document.getElementById("start_button").remove();
@@ -119,6 +121,11 @@ function tick() {
     if (endMarker !== 0 && endMarker < step) {
         stopAllNotes();
         step = startMarker;
+    }
+    if (step % (ppq/24) === 0) {
+        getOutputs().forEach(function (output) {
+            output.sendClock();
+        });
     }
     updateTimeline();
 }
