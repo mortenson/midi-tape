@@ -1,6 +1,5 @@
-var ppq = 120;
+var ppq = 48;
 var bpm = 110;
-var lastTick = 0;
 var playing = false
 var recording = true
 var quantize = false
@@ -116,9 +115,6 @@ function tick() {
             metronome_synth.triggerAttackRelease("C3", .1);
         }
     }
-    if (lastTick === 0) {
-        lastTick = performance.now();
-    }
     step++
     if (endMarker !== 0 && endMarker < step) {
         stopAllNotes();
@@ -139,7 +135,6 @@ function stopAllNotes() {
 
 function togglePlay() {
     playing = !playing
-    lastTick = 0;
     stopAllNotes();
 }
 
@@ -154,7 +149,6 @@ function toggleMetronome() {
 function stop() {
     playing = false
     step = startMarker
-    lastTick = 0
     stopAllNotes();
     updateTimeline();
 }
