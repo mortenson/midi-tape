@@ -1,6 +1,6 @@
 // Settings.
 let playing = false;
-let recording = true;
+let recording = false;
 let quantize = false;
 let midiReady = false;
 let metronome = true;
@@ -21,6 +21,7 @@ let trackKey = false;
 
 // A tape is data that should persist.
 let tape = {
+  version: 1,
   ppq: 48,
   bpm: 110,
   inputDevice: 0,
@@ -194,14 +195,14 @@ function quantizeStep(setStep, multiple, mode) {
 
 function addTrackData(setStep, property, data) {
   if (Array.isArray(data)) {
-    if (typeof tape.tracks[currentTrack][property][setStep] == "undefined") {
+    if (typeof tape.tracks[currentTrack][property][setStep] === "undefined") {
       tape.tracks[currentTrack][property][setStep] = [];
     }
     tape.tracks[currentTrack][property][setStep] = Array.from(
       new Set(tape.tracks[currentTrack][property][setStep].concat(data))
     );
   } else if (typeof data === "object") {
-    if (typeof tape.tracks[currentTrack][property][setStep] == "undefined") {
+    if (typeof tape.tracks[currentTrack][property][setStep] === "undefined") {
       tape.tracks[currentTrack][property][setStep] = {};
     }
     for (let note in data) {
@@ -368,7 +369,7 @@ function addStartMarker() {
   } else {
     startMarker = step;
   }
-  if (startMarker > endMarker) {
+  if (startMarker >= endMarker) {
     endMarker = 0;
   }
 }
