@@ -1,39 +1,41 @@
 <html>
-    <head>
-        <script src="node_modules/webmidi/webmidi.min.js"></script>
-        <script src="node_modules/tone/build/Tone.js"></script>
-        <script src="main.js"></script>
-        <link rel="stylesheet" href="main.css"/>
-    </head>
-    <body>
-        <div id="status">
-            <div id="bpm-status">110 BPM</div>
-            <div id="playing">Paused</div>
-            <div id="recording">Not recording</div>
-            <div id="metronome">Metronome off</div>
-            <div id="count-in">Count in off</div>
-            <div id="quantized">Quantization off</div>
-            <div id="current-track">Current track: 1</div>
-        </div>
-        <button onclick="start()" id="start_button">Start</button>
-        <div class="cassette-image">
-            <img src="cassette.png" />
-        </div>
-        <div id="timeline-center"></div>
-        <div id="timeline">
-            <div id="timeline-start-marker" class="timeline-marker"></div>
-            <div id="timeline-end-marker" class="timeline-marker"></div>
-            <div class="track" id="track_0"></div>
-            <div class="track" id="track_1"></div>
-            <div class="track" id="track_2"></div>
-            <div class="track" id="track_3"></div>
-        </div>
-        <div id="config">
-            <div id="input-device">Input device</div>
-            <div id="output-device-0">Track 1 device: </div>
-            <div id="output-device-1">Track 2 device: </div>
-            <div id="output-device-2">Track 3 device: </div>
-            <div id="output-device-3">Track 4 device: </div>
-        </div>
-    </body>
+  <head>
+    <script src="lib/webmidi.min.js"></script>
+    <script src="lib/Tone.js"></script>
+    <script src="main.js"></script>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <div id="status">
+      <div id="bpm-status">110 BPM</div>
+      <div id="playing">Paused</div>
+      <div id="recording">Not recording</div>
+      <div id="metronome">Metronome off</div>
+      <div id="count-in">Count in off</div>
+      <div id="quantized">Quantization off</div>
+      <div id="current-track">Current track: 1</div>
+    </div>
+    <button onclick="enableWebAudio()" id="start_button">
+      Enable WebAudio
+    </button>
+    <div class="cassette-image">
+      <img src="cassette.png" />
+    </div>
+    <div id="timeline-center"></div>
+    <div id="timeline">
+      <div id="timeline-start-marker" class="timeline-marker"></div>
+      <div id="timeline-end-marker" class="timeline-marker"></div>
+      <div class="track" id="track_0"></div>
+      <div class="track" id="track_1"></div>
+      <div class="track" id="track_2"></div>
+      <div class="track" id="track_3"></div>
+    </div>
+    <div id="config">
+      <div id="input-device">Input device</div>
+      <div id="output-device-0">Track 1 device:</div>
+      <div id="output-device-1">Track 2 device:</div>
+      <div id="output-device-2">Track 3 device:</div>
+      <div id="output-device-3">Track 4 device:</div>
+    </div>
+  </body>
 </html>

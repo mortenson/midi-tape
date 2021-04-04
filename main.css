@@ -1,90 +1,89 @@
 .cassette-image img {
-    width: 300px;
-    margin: 0 auto;
-    display: block;
+  width: 300px;
+  margin: 0 auto;
+  display: block;
 }
 
 #timeline {
-    background: linear-gradient( 
-        90deg
-         , #000 1%, transparent 1%) 1px 0, #fff;
-    background-size: 100px 1px;
-    margin-top: 20px;
-    margin-left: 50%;
-    position: relative;
+  background: linear-gradient(90deg, #000 1%, transparent 1%) 1px 0, #fff;
+  background-size: 100px 1px;
+  margin-top: 20px;
+  margin-left: 50%;
+  position: relative;
 }
 
 #status {
-    display: flex;
-    margin-bottom: 10px;
+  display: flex;
+  margin-bottom: 10px;
 }
 
 #status > * {
-    margin-right: 15px;
+  margin-right: 15px;
 }
 
 .timeline-segment {
-    height: 10px;
-    background: black;
-    position: absolute;
-    min-width: 1px;
-    top: calc(50% - 5px);
+  height: 10px;
+  background: black;
+  position: absolute;
+  min-width: 1px;
+  top: calc(50% - 5px);
 }
 
 .current-track .timeline-segment {
-    background: #42af42;
+  background: #42af42;
 }
 
 .recording .current-track .timeline-segment {
-    background: #ff3c3c;
+  background: #ff3c3c;
 }
 
 #timeline-center {
-    margin-left: calc(50% - 5px);
-    width: 10px;
-    height: 10px;
-    margin-top: 10px;
-    border: solid #42af42;
-    border-width: 0 3px 3px 0;
-    display: inline-block;
-    transform: rotate(45deg);
+  margin-left: calc(50% - 5px);
+  width: 10px;
+  height: 10px;
+  margin-top: 10px;
+  border: solid #42af42;
+  border-width: 0 3px 3px 0;
+  display: inline-block;
+  transform: rotate(45deg);
 }
 
 .recording #timeline-center {
-    border-color: #ff3c3c;
+  border-color: #ff3c3c;
 }
 
 .track {
-    background: linear-gradient(
-        to bottom, 
-        transparent calc(50% - 1px), 
-        black calc(50% - 1px) calc(50% + 1px),
-        transparent calc(50% + 1px));
-    height: 20px;
-    margin: 20px 0;
-    position: relative;
-    margin-left: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    black calc(50% - 1px) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  height: 20px;
+  margin: 20px 0;
+  position: relative;
+  margin-left: 1px;
 }
 
 .track:not(.current-track) {
-    opacity: .3;
+  opacity: 0.3;
 }
 
 #config > div {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 .timeline-marker {
-    position: absolute;
-    height: 100%;
-    width: 5px;
-    display: none;
+  position: absolute;
+  height: 100%;
+  width: 5px;
+  display: none;
 }
 
 #timeline-start-marker {
-    background: blue;
+  background: blue;
 }
 
 #timeline-end-marker {
-    background: purple;
+  background: purple;
 }
