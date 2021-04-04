@@ -154,7 +154,7 @@ function stopAllNotes() {
 
 function togglePlay() {
     playing = !playing
-    if (countIn && step === startMarker) {
+    if (countIn) {
         countInTimer = ppq*4
     }
     stopAllNotes();
@@ -302,6 +302,7 @@ function updateUI() {
     document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
     document.getElementById("recording").innerText = recording ? "Recording" : "Not recording";
     document.getElementById("metronome").innerText = metronome ? "Metronome on" : "Metronome off";
+    document.getElementById("count-in").innerText = countIn ? "Count in on" : "Count in off";
     document.getElementById("quantized").innerText = quantize ? "Quantization on" : "Quantization off";
     document.getElementById("current-track").innerText = `Current track: ${currentTrack+1}`;
     trackData.forEach(function (track, index) {
@@ -440,6 +441,7 @@ function paste() {
 function toggleCountIn() {
     countIn = !countIn;
     countInTimer = 0;
+    updateUI();
 }
 
 var keysPressed = {};
@@ -486,6 +488,7 @@ document.addEventListener('keyup', function(event) {
     }
     delete keysPressed[event.key];
     trackKey = false;
+    inputChange = false;
     if ("1" in keysPressed) {
         trackKey = 0;
     } else if ("2" in keysPressed) {
@@ -494,6 +497,8 @@ document.addEventListener('keyup', function(event) {
         trackKey = 2;
     } else if ("4" in keysPressed) {
         trackKey = 3;
+    } else if ("i" in keysPressed) {
+        inputChange = true;
     }
     switch (event.key) {
         case "ArrowUp":
@@ -503,6 +508,11 @@ document.addEventListener('keyup', function(event) {
                     trackData[trackKey].outputDevice = 0
                 }
                 arrowTrackChange = true;
+            } else if (inputChange) {
+                inputDevice++
+                if (inputDevice >= WebMidi.inputs.length) {
+                    inputDevice = 0
+                }
             }
             break;
         case "ArrowDown":
@@ -512,6 +522,11 @@ document.addEventListener('keyup', function(event) {
                     trackData[trackKey].outputDevice = getOutputs().length-1
                 }
                 arrowTrackChange = true;
+            } else if (inputChange) {
+                inputDevice--
+                if (inputDevice < 0) {
+                    inputDevice = WebMidi.inputs.length-1;
+                }
             }
             break;
         case "ArrowRight":
@@ -542,11 +557,10 @@ document.addEventListener('keyup', function(event) {
             stop();
             break;
         case "m":
-            if ("Shift" in keysPressed) {
-                toggleCountIn();
-            } else {
-                toggleMetronome();
-            }
+            toggleMetronome();
+            break;
+        case "M":
+            toggleCountIn();
             break;
         case "q":
             toggleQuantize();
