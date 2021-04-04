@@ -10,6 +10,7 @@ var midiReady = false;
 var startMarker = 0;
 var endMarker = 0;
 var countIn = false;
+var countInTimer = 0;
 var trackData = [
     {
         outputDevice: 1,
@@ -89,6 +90,16 @@ function tick() {
     if (!playing) {
         return
     }
+    if (countInTimer > 0) {
+        if (countInTimer % (ppq*4) === 0) {
+            metronome_synth.triggerAttackRelease("C4", .1);
+        } else if (countInTimer % ppq === 0) {
+            metronome_synth.triggerAttackRelease("C3", .1);
+        }
+        updateTimeline();
+        countInTimer--;
+        return;
+    }
     trackData.forEach(function (track) {
         if (typeof track.noteOn[step] !== "undefined") {
             for (var note in track.noteOn[step]) {
@@ -143,6 +154,9 @@ function stopAllNotes() {
 
 function togglePlay() {
     playing = !playing
+    if (countIn && step === startMarker) {
+        countInTimer = ppq*4
+    }
     stopAllNotes();
 }
 
@@ -156,6 +170,7 @@ function toggleMetronome() {
 
 function stop() {
     playing = false
+    countInTimer = 0;
     step = startMarker
     stopAllNotes();
     updateTimeline();
@@ -422,6 +437,11 @@ function paste() {
     updateSegments();
 }
 
+function toggleCountIn() {
+    countIn = !countIn;
+    countInTimer = 0;
+}
+
 var keysPressed = {};
 var arrowTrackChange = false;
 var trackKey = false;
@@ -522,7 +542,11 @@ document.addEventListener('keyup', function(event) {
             stop();
             break;
         case "m":
-            toggleMetronome();
+            if ("Shift" in keysPressed) {
+                toggleCountIn();
+            } else {
+                toggleMetronome();
+            }
             break;
         case "q":
             toggleQuantize();
