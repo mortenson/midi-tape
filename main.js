@@ -9,6 +9,7 @@ var inputDevice = 0;
 var midiReady = false;
 var startMarker = 0;
 var endMarker = 0;
+var countIn = false;
 var trackData = [
     {
         outputDevice: 1,
@@ -361,6 +362,20 @@ function addEndMarker() {
     }
 }
 
+function getUnfinishedNotes() {
+    var unfinishedNotes = [];
+    for (var i of Object.keys(trackData[currentTrack].noteOn).map(Number).sort((a, b) => a - b)) {
+        unfinishedNotes = Array.from(new Set(unfinishedNotes.concat(Object.keys(trackData[currentTrack].noteOn[i]))))
+        for (var j of Object.keys(trackData[currentTrack].noteOff).map(Number).sort((a, b) => a - b)) {
+            if (j < i) {
+                continue;
+            }
+            unfinishedNotes = unfinishedNotes.filter(note => !trackData[currentTrack].noteOff[j].includes(note));
+        }
+    }
+    return unfinishedNotes;
+}
+
 function deleteNotes() {
     if (endMarker > 0) {
         for (var i=startMarker; i<=endMarker; ++i) {
@@ -378,6 +393,7 @@ function deleteNotes() {
             }
         }
         stopAllNotes();
+        addTrackData(startMarker, "noteOff", getUnfinishedNotes())
         updateSegments();
     }
 }
@@ -402,6 +418,7 @@ function paste() {
             addTrackData(pasteStep, "controlchange", trackData[currentTrack].controlchange[i]);
         }
     }
+    addTrackData(step+(endMarker-startMarker), "noteOff", getUnfinishedNotes())
     updateSegments();
 }
 
