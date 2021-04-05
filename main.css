@@ -1,13 +1,13 @@
 body {
-  background: #1E1E1E;
-    color: #dedede;
-    font-family: Helvetica, sans-serif;
-    text-transform: uppercase;
-    font-size: 14px;
+  background: #1e1e1e;
+  color: #dedede;
+  font-family: Helvetica, sans-serif;
+  text-transform: uppercase;
+  font-size: 14px;
 }
 
 * {
-  transition: .1s;
+  transition: 0.1s;
 }
 
 #cassette {
@@ -47,7 +47,7 @@ body {
   height: 50px;
   border: 2px solid #dedede;
   border-radius: 50%;
-  background: #1E1E1E;
+  background: #1e1e1e;
   position: relative;
   animation: spin 5s infinite;
   animation-timing-function: linear;
@@ -72,19 +72,19 @@ body.playing .reel-inner {
 
 @keyframes spin {
   100% {
-    transform:rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
 @keyframes spin2 {
   100% {
-    transform:rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
 @keyframes spin3 {
   100% {
-    transform:rotate(-360deg);
+    transform: rotate(-360deg);
   }
 }
 
@@ -102,19 +102,15 @@ body.playing .reel-inner {
 }
 
 .reel-inner i:nth-child(2) {
-  transform: rotate(
-    56deg
-    );
-    top: 10px;
-    right: 6px;
-      }
+  transform: rotate(56deg);
+  top: 10px;
+  right: 6px;
+}
 
 .reel-inner i:nth-child(3) {
-  transform: rotate( 
-    116deg
-     );
-    bottom: 10px;
-    right: 6px;
+  transform: rotate(116deg);
+  bottom: 10px;
+  right: 6px;
 }
 
 .reel-inner i:nth-child(4) {
@@ -123,23 +119,19 @@ body.playing .reel-inner {
 }
 
 .reel-inner i:nth-child(5) {
-  transform: rotate( 
-    56deg
-     );
-    bottom: 10px;
-    left: 6px;
+  transform: rotate(56deg);
+  bottom: 10px;
+  left: 6px;
 }
 
 .reel-inner i:nth-child(6) {
-  transform: rotate(
-    116deg
-    );
-    top: 10px;
-    left: 6px;
+  transform: rotate(116deg);
+  top: 10px;
+  left: 6px;
 }
 
 #timeline {
-  background: linear-gradient(90deg, #dedede 1%, transparent 1%) 1px 0, #1E1E1E;
+  background: linear-gradient(90deg, #dedede 1%, transparent 1%) 1px 0, #1e1e1e;
   background-size: 100px 1px;
   margin-top: 20px;
   margin-left: 50%;

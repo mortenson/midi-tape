@@ -2,9 +2,15 @@
 <html>
   <head>
     <title>midi-tape - tape recording for external MIDI</title>
-    <meta property="og:title" content="midi-tape - tape recording for external MIDI">
-    <meta property="og:description" content="Tape mode style recording for your external MIDI devices!">
-    <meta name="twitter:card" content="summary">
+    <meta
+      property="og:title"
+      content="midi-tape - tape recording for external MIDI"
+    />
+    <meta
+      property="og:description"
+      content="Tape mode style recording for your external MIDI devices!"
+    />
+    <meta name="twitter:card" content="summary" />
     <script src="lib/webmidi.min.js"></script>
     <script src="lib/Tone.js"></script>
     <script src="lib/localforage.min.js"></script>
@@ -19,7 +25,13 @@
       <div id="metronome">Metronome off</div>
       <div id="count-in">Count in off</div>
       <div id="quantized">Quantization off</div>
-      <div id="help"><a href="https://github.com/mortenson/midi-tape#user-guide" target="_blank">Help</a></div>
+      <div id="help">
+        <a
+          href="https://github.com/mortenson/midi-tape#user-guide"
+          target="_blank"
+          >Help</a
+        >
+      </div>
     </div>
     <div id="cassette">
       <div class="reel">
@@ -34,12 +46,12 @@
       </div>
       <div class="reel">
         <div class="reel-inner">
-            <i></i>
-            <i></i>
-            <i></i>
-            <i></i>
-            <i></i>
-            <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
         </div>
       </div>
     </div>
@@ -53,19 +65,13 @@
       <div class="track" id="track_3"></div>
     </div>
     <div id="buttons">
-      <button onclick="wipeTape()">
-        Wipe tape
-      </button>
-      <button onclick="save()">
-        Save
-      </button>
-      <button onclick="load()">
-        Load
-      </button>
+      <button onclick="wipeTape()">Wipe tape</button>
+      <button onclick="save()">Save</button>
+      <button onclick="load()">Load</button>
       <button onclick="enableWebAudio()" id="webaudio_button">
         Enable WebAudio
       </button>
-  </div>
+    </div>
     <div id="config">
       <div id="input-device">Input device</div>
       <div id="output-device-0">Track 1 device:</div>

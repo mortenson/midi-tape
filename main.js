@@ -274,7 +274,7 @@ function onPitchBend(event) {
     return;
   }
   if (playing && recording) {
-    addTrackData(step, "pitchbend", event.value)
+    addTrackData(step, "pitchbend", event.value);
     renderSegments();
   }
   getOutputDevice(currentTrack).sendPitchBend(
@@ -486,10 +486,14 @@ function wipeTape() {
 
 function save() {
   lockTape = true;
-  let element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(tape, null, 2)));
-  element.setAttribute('download', "midi-tape.json");
-  element.style.display = 'none';
+  let element = document.createElement("a");
+  element.setAttribute(
+    "href",
+    "data:text/plain;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(tape, null, 2))
+  );
+  element.setAttribute("download", "midi-tape.json");
+  element.style.display = "none";
   document.body.appendChild(element);
   element.click();
   document.body.removeChild(element);
@@ -501,7 +505,7 @@ function load() {
   input.type = "file";
   input.onchange = function (event) {
     let reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
       lockTape = true;
       tape = JSON.parse(event.target.result);
       storeTape();
@@ -513,16 +517,21 @@ function load() {
 }
 
 function spinCassette(backwards) {
-  document.getElementById("cassette").classList = ""
+  document.getElementById("cassette").classList = "";
   if (backwards) {
-    setTimeout(() => document.getElementById("cassette").classList = "spin-back");
+    setTimeout(
+      () => (document.getElementById("cassette").classList = "spin-back")
+    );
   } else {
-    setTimeout(() => document.getElementById("cassette").classList = "spin");
+    setTimeout(() => (document.getElementById("cassette").classList = "spin"));
   }
   if (spinTimeout) {
     clearTimeout(spinTimeout);
   }
-  spinTimeout = setTimeout(() => document.getElementById("cassette").classList = "", 1000)
+  spinTimeout = setTimeout(
+    () => (document.getElementById("cassette").classList = ""),
+    1000
+  );
 }
 
 document.addEventListener("keydown", (event) => {
@@ -693,12 +702,12 @@ document.addEventListener("keyup", function (event) {
       break;
     case "V":
       // 11th hour hack to avoid refactoring paste/addTrackData.
-      currentTrackBackup = currentTrack
+      currentTrackBackup = currentTrack;
       tape.tracks.forEach(function (track, index) {
         currentTrack = index;
         paste();
       });
-      currentTrack = currentTrackBackup
+      currentTrack = currentTrackBackup;
       break;
   }
   renderStatus();
@@ -713,7 +722,9 @@ function getStepPixelPosition(step) {
 }
 
 function renderStatus() {
-  document.body.classList = `${recording ? "recording" : ""} ${playing ? "playing" : ""}`
+  document.body.classList = `${recording ? "recording" : ""} ${
+    playing ? "playing" : ""
+  }`;
   document.getElementById("bpm-status").innerText = tape.bpm + " BPM";
   document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
   document.getElementById("recording").innerText = recording
@@ -820,7 +831,7 @@ setInterval(function () {
   }
 }, 500);
 
-localforage.getItem('tape').then(function(value) {
+localforage.getItem("tape").then(function (value) {
   if (value) {
     tape = value;
     renderSegments();
