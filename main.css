@@ -4,6 +4,7 @@ body {
   font-family: Helvetica, sans-serif;
   text-transform: uppercase;
   font-size: 14px;
+  overflow-x: hidden;
 }
 
 * {
