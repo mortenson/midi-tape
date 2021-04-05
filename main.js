@@ -113,6 +113,11 @@ function tick() {
       metronome_synth.triggerAttackRelease("C3", 0.1);
     }
     renderTimeline();
+    if (countInTimer % (tape.ppq / 24) === 0) {
+      getOutputs().forEach(function (output) {
+        output.sendClock();
+      });
+    }
     countInTimer--;
     return;
   }
@@ -154,15 +159,15 @@ function tick() {
       metronome_synth.triggerAttackRelease("C3", 0.1);
     }
   }
-  step++;
-  if (endMarker !== 0 && endMarker < step) {
-    stopAllNotes();
-    step = startMarker;
-  }
   if (step % (tape.ppq / 24) === 0) {
     getOutputs().forEach(function (output) {
       output.sendClock();
     });
+  }
+  step++;
+  if (endMarker !== 0 && endMarker < step) {
+    stopAllNotes();
+    step = startMarker;
   }
   renderTimeline();
 }

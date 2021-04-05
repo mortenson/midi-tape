@@ -74,8 +74,12 @@ midi-tape when needed.
 
 ### Notes
 
-Your input device's MIDI channel is ignored, to keep the idea that one track is
+- Your input device's MIDI channel is ignored, to keep the idea that one track is
 one MIDI output device + one channel.
+- A MIDI clock is sent to all outputs every quarter note.
+- Since it's JavaScript, the BPM is likely always a little off.
+- The tape runs at a resolution of 48 PPQ. Higher PPQ values make the tape
+run slow.
 
 ## Development
 
