@@ -834,9 +834,11 @@ setInterval(function () {
 localforage.getItem("tape").then(function (value) {
   if (value) {
     tape = value;
-    renderSegments();
-    renderTimeline();
-    renderStatus();
+    if (midiReady) {
+      renderSegments();
+      renderTimeline();
+      renderStatus();
+    }
   }
   lockTape = false;
 });
@@ -847,6 +849,8 @@ timer.onmessage = (event) => {
 
 WebMidi.enable((err) => {
   midiReady = true;
+  renderSegments();
+  renderTimeline();
   renderStatus();
   WebMidi.inputs.forEach(function (input, key) {
     input.addListener("noteon", "all", onNoteOn);
