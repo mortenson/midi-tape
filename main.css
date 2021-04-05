@@ -163,11 +163,29 @@ body.playing .reel-inner {
   top: calc(50% - 5px);
 }
 
+.timeline-pitchbend {
+  position: absolute;
+  width: 1px;
+  height: 5px;
+  background: #8617ff;
+  top: -2px;
+}
+
+.timeline-controlchange {
+  position: absolute;
+  width: 1px;
+  height: 5px;
+  background: cyan;
+  top: -2px;
+}
+
 .current-track .timeline-segment {
   background: #42af42;
 }
 
-.recording .current-track .timeline-segment {
+.recording .current-track .timeline-segment,
+.recording .current-track .timeline-pitchbend,
+.recording .current-track .timeline-controlchange {
   background: #d82323;
 }
 
@@ -223,9 +241,9 @@ body.playing .reel-inner {
 }
 
 #timeline-start-marker {
-  background: blue;
+  background: #27b7a9;
 }
 
 #timeline-end-marker {
-  background: purple;
+  background: #caca1e;
 }

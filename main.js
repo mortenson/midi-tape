@@ -17,12 +17,11 @@ let step = 0;
 let startMarker = 0;
 let endMarker = 0;
 let countInTimer = 0;
-const timer = new Worker("timer.js");
+let timer = new Worker("timer.js");
 
 // Used for user interactions.
 let keysPressed = {};
 let arrowTrackChange = false;
-let trackKey = false;
 let lockTape = true;
 let spinTimeout;
 
@@ -70,12 +69,12 @@ let tape = {
 
 // A fake MIDI output device for ease of development.
 
-const pitchShifter = new Tone.PitchShift(0).toDestination();
-const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+let pitchShifter = new Tone.PitchShift(0).toDestination();
+let synth = new Tone.PolySynth(Tone.Synth).toDestination();
 synth.connect(pitchShifter);
-const metronome_synth = new Tone.Synth().toDestination();
+let metronome_synth = new Tone.Synth().toDestination();
 
-const fakeOutput = {
+let fakeOutput = {
   name: "Fake Synth",
 };
 
@@ -181,11 +180,11 @@ function getOutputs() {
 }
 
 function getOutputDevice(trackNumber) {
-  let i = trackNumber;
+  let i = tape.tracks[trackNumber].outputDevice;
   if (i > getOutputs().length) {
     i = 0;
   }
-  return getOutputs()[tape.tracks[i].outputDevice];
+  return getOutputs()[i];
 }
 
 function quantizeStep(setStep, multiple, mode) {
@@ -269,11 +268,12 @@ function onNoteOff(event) {
 }
 
 function onPitchBend(event) {
-  if (getInputDevice() !== event.target.id) {
+  if (getInputDevice().id !== event.target.id) {
     return;
   }
   if (playing && recording) {
-    tape.tracks[currentTrack].pitchbend[step] = event.value;
+    addTrackData(step, "pitchbend", event.value)
+    renderSegments();
   }
   getOutputDevice(currentTrack).sendPitchBend(
     event.value,
@@ -282,13 +282,14 @@ function onPitchBend(event) {
 }
 
 function onControlChange(event) {
-  if (getInputDevice() !== event.target.id) {
+  if (getInputDevice().id !== event.target.id) {
     return;
   }
   if (playing && recording) {
     addTrackData(step, "controlchange", {
       [event.controller.name]: event.value,
     });
+    renderSegments();
   }
   getOutputDevice(currentTrack).sendControlChange(
     event.controller.name,
@@ -300,7 +301,7 @@ function onControlChange(event) {
 // Keyboard interaction and callbacks.
 
 function getUnfinishedNotes() {
-  const unfinishedNotes = [];
+  let unfinishedNotes = [];
   for (let i of Object.keys(tape.tracks[currentTrack].noteOn)
     .map(Number)
     .sort((a, b) => a - b)) {
@@ -388,7 +389,7 @@ function addEndMarker() {
   if (playing) {
     return;
   }
-  if (endMarker === step) {
+  if (endMarker === step || step === 0) {
     endMarker = 0;
   } else if (startMarker < step) {
     endMarker = step;
@@ -410,14 +411,16 @@ function toggleCountIn() {
   renderStatus();
 }
 
-function deleteNotes() {
+function deleteTrackData(pitch_cc_only) {
   if (endMarker > 0) {
     for (let i = startMarker; i <= endMarker; ++i) {
-      if (typeof tape.tracks[currentTrack].noteOn[i] !== "undefined") {
-        delete tape.tracks[currentTrack].noteOn[i];
-      }
-      if (typeof tape.tracks[currentTrack].noteOff[i] !== "undefined") {
-        delete tape.tracks[currentTrack].noteOff[i];
+      if (!pitch_cc_only) {
+        if (typeof tape.tracks[currentTrack].noteOn[i] !== "undefined") {
+          delete tape.tracks[currentTrack].noteOn[i];
+        }
+        if (typeof tape.tracks[currentTrack].noteOff[i] !== "undefined") {
+          delete tape.tracks[currentTrack].noteOff[i];
+        }
       }
       if (typeof tape.tracks[currentTrack].pitchbend[i] !== "undefined") {
         delete tape.tracks[currentTrack].pitchbend[i];
@@ -481,7 +484,7 @@ function wipeTape() {
 
 function save() {
   lockTape = true;
-  const element = document.createElement('a');
+  let element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify(tape, null, 2)));
   element.setAttribute('download', "midi-tape.json");
   element.style.display = 'none';
@@ -492,11 +495,10 @@ function save() {
 }
 
 function load() {
-  const input = document.createElement("input");
+  let input = document.createElement("input");
   input.type = "file";
   input.onchange = function (event) {
-    lockTape = false;
-    const reader = new FileReader();
+    let reader = new FileReader();
     reader.onload = function(event) {
       lockTape = true;
       tape = JSON.parse(event.target.result);
@@ -526,6 +528,16 @@ document.addEventListener("keydown", (event) => {
     return;
   }
   keysPressed[event.key] = true;
+  let trackKey = false;
+  if ("1" in keysPressed) {
+    trackKey = 0;
+  } else if ("2" in keysPressed) {
+    trackKey = 1;
+  } else if ("3" in keysPressed) {
+    trackKey = 2;
+  } else if ("4" in keysPressed) {
+    trackKey = 3;
+  }
   switch (event.key) {
     case "ArrowRight":
       if (trackKey === false && !playing) {
@@ -554,6 +566,10 @@ document.addEventListener("keydown", (event) => {
         renderTimeline();
       }
       break;
+    case "ArrowUp":
+    case "ArrowDown":
+      event.preventDefault();
+      break;
   }
 });
 
@@ -562,8 +578,8 @@ document.addEventListener("keyup", function (event) {
     return;
   }
   delete keysPressed[event.key];
-  trackKey = false;
-  inputChange = false;
+  let trackKey = false;
+  let inputChange = false;
   if ("1" in keysPressed) {
     trackKey = 0;
   } else if ("2" in keysPressed) {
@@ -668,7 +684,7 @@ document.addEventListener("keyup", function (event) {
       addEndMarker();
       break;
     case "Backspace":
-      deleteNotes();
+      deleteTrackData("Shift" in keysPressed);
       break;
     case "v":
       paste();
@@ -729,8 +745,9 @@ function renderStatus() {
 
 function renderSegments() {
   tape.tracks.forEach(function (track, track_number) {
-    document.getElementById(`track_${track_number}`).innerHTML = "";
-    const segments = [];
+    trackElem = document.getElementById(`track_${track_number}`);
+    trackElem.innerHTML = "";
+    let segments = [];
     for (let i of Object.keys(track.noteOn)
       .map(Number)
       .sort((a, b) => a - b)) {
@@ -753,13 +770,29 @@ function renderSegments() {
       }
     }
     segments.forEach(function (segment) {
-      const segmentElem = document.createElement("div");
+      let segmentElem = document.createElement("div");
       segmentElem.classList = "timeline-segment";
       left = getStepPixelPosition(segment.firstStep);
       width = getStepPixelPosition(segment.lastStep) - left;
       segmentElem.style = `left: ${left}px; width: ${width}px`;
-      document.getElementById(`track_${track_number}`).append(segmentElem);
+      trackElem.append(segmentElem);
     });
+
+    for (let i in track.pitchbend) {
+      let pitchElem = document.createElement("div");
+      pitchElem.classList = "timeline-pitchbend";
+      left = getStepPixelPosition(i);
+      pitchElem.style = `left: ${left}px;`;
+      trackElem.append(pitchElem);
+    }
+
+    for (let i in track.controlchange) {
+      let pitchElem = document.createElement("div");
+      pitchElem.classList = "timeline-controlchange";
+      left = getStepPixelPosition(i);
+      pitchElem.style = `left: ${left}px;`;
+      trackElem.append(pitchElem);
+    }
   });
 }
 
