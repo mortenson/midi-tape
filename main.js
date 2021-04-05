@@ -26,6 +26,8 @@ let lockTape = true;
 let spinTimeout;
 
 // A tape is data that should persist.
+let defaultOutputDevice = 0;
+let defaultOutputChannel = 0;
 let tape = {
   version: 1,
   ppq: 48,
@@ -33,32 +35,32 @@ let tape = {
   inputDevice: 0,
   tracks: [
     {
-      outputDevice: 1,
-      outputChannel: 1,
+      outputDevice: defaultOutputDevice,
+      outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
       pitchbend: {},
       controlchange: {},
     },
     {
-      outputDevice: 1,
-      outputChannel: 1,
+      outputDevice: defaultOutputDevice,
+      outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
       pitchbend: {},
       controlchange: {},
     },
     {
-      outputDevice: 1,
-      outputChannel: 1,
+      outputDevice: defaultOutputDevice,
+      outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
       pitchbend: {},
       controlchange: {},
     },
     {
-      outputDevice: 1,
-      outputChannel: 1,
+      outputDevice: defaultOutputDevice,
+      outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
       pitchbend: {},
