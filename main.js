@@ -27,7 +27,7 @@ let spinTimeout;
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
-let defaultOutputChannel = 0;
+let defaultOutputChannel = 1;
 let tape = {
   version: 1,
   ppq: 48,
