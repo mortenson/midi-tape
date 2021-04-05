@@ -1,3 +1,8 @@
+// I wrote this code for fun over a weekend.
+// Don't judge it too harshly.
+// I mean I can't stop you.
+// But you'll have to live with yourself.
+
 // Settings.
 let playing = false;
 let recording = false;
@@ -19,6 +24,7 @@ let keysPressed = {};
 let arrowTrackChange = false;
 let trackKey = false;
 let lockTape = true;
+let spinTimeout;
 
 // A tape is data that should persist.
 let tape = {
@@ -319,7 +325,7 @@ function getUnfinishedNotes() {
 
 function enableWebAudio() {
   Tone.start();
-  document.getElementById("start_button").remove();
+  document.getElementById("webaudio_button").remove();
 }
 
 function stopAllNotes() {
@@ -347,6 +353,9 @@ function toggleMetronome() {
 function stop() {
   playing = false;
   countInTimer = 0;
+  if (step !== startMarker) {
+    spinCassette(true);
+  }
   step = startMarker;
   stopAllNotes();
   renderTimeline();
@@ -499,6 +508,19 @@ function load() {
   input.click();
 }
 
+function spinCassette(backwards) {
+  document.getElementById("cassette").classList = ""
+  if (backwards) {
+    setTimeout(() => document.getElementById("cassette").classList = "spin-back");
+  } else {
+    setTimeout(() => document.getElementById("cassette").classList = "spin");
+  }
+  if (spinTimeout) {
+    clearTimeout(spinTimeout);
+  }
+  spinTimeout = setTimeout(() => document.getElementById("cassette").classList = "", 1000)
+}
+
 document.addEventListener("keydown", (event) => {
   if (!midiReady) {
     return;
@@ -510,6 +532,7 @@ document.addEventListener("keydown", (event) => {
         if ("Shift" in keysPressed) {
           step += 1;
           step = quantizeStep(step, tape.ppq * 4, "ceil");
+          spinCassette();
         } else {
           step += 10;
         }
@@ -521,6 +544,7 @@ document.addEventListener("keydown", (event) => {
         if ("Shift" in keysPressed) {
           step -= 1;
           step = quantizeStep(step, tape.ppq * 4, "floor");
+          spinCassette(true);
         } else {
           step -= 10;
         }
@@ -662,7 +686,7 @@ function getStepPixelPosition(step) {
 }
 
 function renderStatus() {
-  document.body.classList = recording ? "recording" : "";
+  document.body.classList = `${recording ? "recording" : ""} ${playing ? "playing" : ""}`
   document.getElementById("bpm-status").innerText = tape.bpm + " BPM";
   document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
   document.getElementById("recording").innerText = recording
@@ -677,9 +701,6 @@ function renderStatus() {
   document.getElementById("quantized").innerText = quantize
     ? "Quantization on"
     : "Quantization off";
-  document.getElementById("current-track").innerText = `Current track: ${
-    currentTrack + 1
-  }`;
   tape.tracks.forEach(function (track, index) {
     document.getElementById(`track_${index}`).classList =
       index === currentTrack ? "track current-track" : "track";

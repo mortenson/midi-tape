@@ -14,10 +14,28 @@
       <div id="metronome">Metronome off</div>
       <div id="count-in">Count in off</div>
       <div id="quantized">Quantization off</div>
-      <div id="current-track">Current track: 1</div>
     </div>
-    <div class="cassette-image">
-      <img src="cassette.png" />
+    <div id="cassette">
+      <div class="reel">
+        <div class="reel-inner">
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+      </div>
+      <div class="reel">
+        <div class="reel-inner">
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+        </div>
+      </div>
     </div>
     <div id="timeline-center"></div>
     <div id="timeline">
@@ -28,6 +46,20 @@
       <div class="track" id="track_2"></div>
       <div class="track" id="track_3"></div>
     </div>
+    <div id="buttons">
+      <button onclick="wipeTape()">
+        Wipe tape
+      </button>
+      <button onclick="save()">
+        Save
+      </button>
+      <button onclick="load()">
+        Load
+      </button>
+      <button onclick="enableWebAudio()" id="webaudio_button">
+        Enable WebAudio
+      </button>
+  </div>
     <div id="config">
       <div id="input-device">Input device</div>
       <div id="output-device-0">Track 1 device:</div>
@@ -35,17 +67,5 @@
       <div id="output-device-2">Track 3 device:</div>
       <div id="output-device-3">Track 4 device:</div>
     </div>
-    <button onclick="enableWebAudio()">
-      Enable WebAudio
-    </button>
-    <button onclick="wipeTape()">
-      Wipe tape
-    </button>
-    <button onclick="save()">
-      Save
-    </button>
-    <button onclick="load()">
-      Load
-    </button>
   </body>
 </html>

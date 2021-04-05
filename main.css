@@ -1,11 +1,145 @@
-.cassette-image img {
-  width: 300px;
+body {
+  background: #1E1E1E;
+    color: #dedede;
+    font-family: Helvetica, sans-serif;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+* {
+  transition: .1s;
+}
+
+#cassette {
+  width: 400px;
+  height: 200px;
   margin: 0 auto;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 2px solid #dedede;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.reel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 175px;
+  height: 175px;
+  border: 2px solid #dedede;
+  border-radius: 50%;
+}
+
+.recording #cassette,
+.recording .reel,
+.recording .reel-inner {
+  border-color: #d82323;
+}
+
+.recording .reel-inner i {
+  background-color: #d82323;
+}
+
+.reel-inner {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #dedede;
+  border-radius: 50%;
+  background: #1E1E1E;
+  position: relative;
+  animation: spin 5s infinite;
+  animation-timing-function: linear;
+  animation-play-state: paused;
+}
+
+#cassette.spin .reel-inner {
+  animation: spin2 1s;
+}
+
+#cassette.spin-back .reel-inner {
+  animation: spin3 1s;
+}
+
+body:not(.playing) .reel-inner {
+  animation-play-state: paused;
+}
+
+body.playing .reel-inner {
+  animation-play-state: running;
+}
+
+@keyframes spin {
+  100% {
+    transform:rotate(360deg);
+  }
+}
+
+@keyframes spin2 {
+  100% {
+    transform:rotate(360deg);
+  }
+}
+
+@keyframes spin3 {
+  100% {
+    transform:rotate(-360deg);
+  }
+}
+
+.reel-inner i {
+  width: 2px;
+  height: 10px;
+  background: #dedede;
+  display: inline-block;
+  position: absolute;
+}
+
+.reel-inner i:nth-child(1) {
+  left: 24px;
+  top: 0;
+}
+
+.reel-inner i:nth-child(2) {
+  transform: rotate(
+    56deg
+    );
+    top: 10px;
+    right: 6px;
+      }
+
+.reel-inner i:nth-child(3) {
+  transform: rotate( 
+    116deg
+     );
+    bottom: 10px;
+    right: 6px;
+}
+
+.reel-inner i:nth-child(4) {
+  left: 24px;
+  bottom: 0;
+}
+
+.reel-inner i:nth-child(5) {
+  transform: rotate( 
+    56deg
+     );
+    bottom: 10px;
+    left: 6px;
+}
+
+.reel-inner i:nth-child(6) {
+  transform: rotate(
+    116deg
+    );
+    top: 10px;
+    left: 6px;
 }
 
 #timeline {
-  background: linear-gradient(90deg, #000 1%, transparent 1%) 1px 0, #fff;
+  background: linear-gradient(90deg, #dedede 1%, transparent 1%) 1px 0, #1E1E1E;
   background-size: 100px 1px;
   margin-top: 20px;
   margin-left: 50%;
@@ -14,7 +148,7 @@
 
 #status {
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 #status > * {
@@ -23,7 +157,7 @@
 
 .timeline-segment {
   height: 10px;
-  background: black;
+  background: #dedede;
   position: absolute;
   min-width: 1px;
   top: calc(50% - 5px);
@@ -34,7 +168,7 @@
 }
 
 .recording .current-track .timeline-segment {
-  background: #ff3c3c;
+  background: #d82323;
 }
 
 #timeline-center {
@@ -49,14 +183,14 @@
 }
 
 .recording #timeline-center {
-  border-color: #ff3c3c;
+  border-color: #d82323;
 }
 
 .track {
   background: linear-gradient(
     to bottom,
     transparent calc(50% - 1px),
-    black calc(50% - 1px) calc(50% + 1px),
+    #dedede calc(50% - 1px) calc(50% + 1px),
     transparent calc(50% + 1px)
   );
   height: 20px;
@@ -67,6 +201,14 @@
 
 .track:not(.current-track) {
   opacity: 0.3;
+}
+
+#buttons {
+  margin-top: 50px;
+}
+
+#config {
+  margin-top: 20px;
 }
 
 #config > div {
