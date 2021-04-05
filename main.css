@@ -247,3 +247,11 @@ body.playing .reel-inner {
 #timeline-end-marker {
   background: #caca1e;
 }
+
+#help {
+  margin-left: auto;
+}
+
+#help a {
+  color: #dedede;
+}
