@@ -653,11 +653,11 @@ document.addEventListener("keyup", function (event) {
     case "p":
       togglePlay();
       break;
+    case "P":
+      stop();
+      break;
     case "r":
       toggleRecording();
-      break;
-    case "s":
-      stop();
       break;
     case "m":
       toggleMetronome();
@@ -688,6 +688,15 @@ document.addEventListener("keyup", function (event) {
       break;
     case "v":
       paste();
+      break;
+    case "V":
+      // 11th hour hack to avoid refactoring paste/addTrackData.
+      currentTrackBackup = currentTrack
+      tape.tracks.forEach(function (track, index) {
+        currentTrack = index;
+        paste();
+      });
+      currentTrack = currentTrackBackup
       break;
   }
   renderStatus();
