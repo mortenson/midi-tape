@@ -160,7 +160,7 @@ body.playing .reel-inner {
   position: absolute;
   width: 1px;
   height: 5px;
-  background: #8617ff;
+  background: #dedede;
   top: -2px;
 }
 
@@ -168,12 +168,20 @@ body.playing .reel-inner {
   position: absolute;
   width: 1px;
   height: 5px;
-  background: cyan;
+  background: #dedede;
   top: -2px;
 }
 
 .current-track .timeline-segment {
   background: #42af42;
+}
+
+.current-track .timeline-controlchange {
+  background: cyan;
+}
+
+.current-track .timeline-pitchbend {
+  background: #8617ff;
 }
 
 .recording .current-track .timeline-segment,
