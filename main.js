@@ -137,11 +137,13 @@ function tick() {
     }
     if (typeof track.controlchange[step] !== "undefined") {
       for (let name in track.controlchange[step]) {
-        getOutputDevice(trackNumber).sendControlChange(
-          name,
-          track.controlchange[step][name],
-          track.outputChannel
-        );
+        try {
+          getOutputDevice(trackNumber).sendControlChange(
+            name,
+            track.controlchange[step][name],
+            track.outputChannel
+          );
+        } catch (e) {}
       }
     }
   });
@@ -293,11 +295,13 @@ function onControlChange(event) {
     });
     renderSegments();
   }
-  getOutputDevice(currentTrack).sendControlChange(
-    event.controller.name,
-    event.value,
-    tape.tracks[currentTrack].outputChannel
-  );
+  try {
+    getOutputDevice(currentTrack).sendControlChange(
+      event.controller.name,
+      event.value,
+      tape.tracks[currentTrack].outputChannel
+    );
+  } catch (e) {}
 }
 
 // Keyboard interaction and callbacks.
