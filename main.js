@@ -234,7 +234,7 @@ function onNoteOn(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
-  if (playing && recording) {
+  if (playing && recording && countInTimer <= 0) {
     setStep = step;
     if (quantize) {
       setStep = quantizeStep(setStep, tape.ppq / 2);
@@ -257,7 +257,7 @@ function onNoteOff(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
-  if (playing && recording) {
+  if (playing && recording && countInTimer <= 0) {
     setStep = step;
     if (quantize) {
       newStep = quantizeStep(setStep, tape.ppq / 2);
@@ -280,7 +280,7 @@ function onPitchBend(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
-  if (playing && recording) {
+  if (playing && recording && countInTimer <= 0) {
     addTrackData(step, "pitchbend", event.value);
     renderSegments();
   }
@@ -294,7 +294,7 @@ function onControlChange(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
-  if (playing && recording) {
+  if (playing && recording && countInTimer <= 0) {
     addTrackData(step, "controlchange", {
       [event.controller.name]: event.value,
     });
