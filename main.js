@@ -397,6 +397,9 @@ function stopAllNotes() {
   getOutputs().forEach(function (output) {
     output.stopNote("all");
   });
+  tape.tracks.forEach(function (track, trackNumber) {
+    getOutputDevice(trackNumber).sendPitchBend(0);
+  });
 }
 
 function togglePlay() {
