@@ -10,6 +10,7 @@ let quantize = false;
 let midiReady = false;
 let metronome = true;
 let countIn = false;
+let overdub = false;
 
 // Used for recording/playback.
 let currentTrack = 0;
@@ -18,6 +19,8 @@ let startMarker = 0;
 let endMarker = 0;
 let countInTimer = 0;
 let timer = new Worker("timer.js");
+let alreadyWiped = {};
+let notesHeld = {};
 
 // Used for user interactions.
 let keysPressed = {};
@@ -102,6 +105,47 @@ fakeOutput.sendClock = function () {};
 
 // Main callback for outputting MIDI.
 
+function wipeStepData() {
+  let didWipe = false;
+  if (
+    !("noteOn" in alreadyWiped) &&
+    typeof tape.tracks[currentTrack].noteOn[step] !== "undefined"
+  ) {
+    delete tape.tracks[currentTrack].noteOn[step];
+    didWipe = true;
+  }
+  if (
+    !("noteOff" in alreadyWiped) &&
+    typeof tape.tracks[currentTrack].noteOff[step] !== "undefined"
+  ) {
+    delete tape.tracks[currentTrack].noteOff[step];
+    didWipe = true;
+    addTrackData(
+      step,
+      "noteOff",
+      getUnfinishedNotes().filter((note) => !note in notesHeld)
+    );
+  }
+  if (
+    !("pitchbend" in alreadyWiped) &&
+    typeof tape.tracks[currentTrack].pitchbend[step] !== "undefined"
+  ) {
+    delete tape.tracks[currentTrack].pitchbend[step];
+    didWipe = true;
+  }
+  if (
+    !("controlchange" in alreadyWiped) &&
+    typeof tape.tracks[currentTrack].controlchange[step] !== "undefined"
+  ) {
+    delete tape.tracks[currentTrack].controlchange[step];
+    didWipe = true;
+  }
+  alreadyWiped = {};
+  if (didWipe) {
+    renderSegments();
+  }
+}
+
 function tick() {
   if (!playing) {
     return;
@@ -120,6 +164,9 @@ function tick() {
     }
     countInTimer--;
     return;
+  }
+  if (recording && overdub) {
+    wipeStepData();
   }
   tape.tracks.forEach(function (track, trackNumber) {
     if (typeof track.noteOn[step] !== "undefined") {
@@ -209,6 +256,10 @@ function quantizeStep(setStep, multiple, mode) {
 }
 
 function addTrackData(setStep, property, data) {
+  if (overdub) {
+    delete tape.tracks[currentTrack][property][setStep];
+    alreadyWiped[property] = true;
+  }
   if (Array.isArray(data)) {
     if (typeof tape.tracks[currentTrack][property][setStep] === "undefined") {
       tape.tracks[currentTrack][property][setStep] = [];
@@ -242,6 +293,7 @@ function onNoteOn(event) {
     addTrackData(setStep, "noteOn", {
       [event.note.name + event.note.octave]: event.velocity,
     });
+    notesHeld[event.note.name + event.note.octave] = true;
     renderSegments();
   }
   getOutputDevice(currentTrack).playNote(
@@ -268,6 +320,7 @@ function onNoteOff(event) {
       setStep = newStep;
     }
     addTrackData(setStep, "noteOff", [event.note.name + event.note.octave]);
+    delete notesHeld[event.note.name + event.note.octave];
     renderSegments();
   }
   getOutputDevice(currentTrack).stopNote(
@@ -348,6 +401,11 @@ function stopAllNotes() {
 
 function togglePlay() {
   playing = !playing;
+  if (!playing) {
+    notesHeld = {};
+    addTrackData(step, "noteOff", getUnfinishedNotes());
+    renderSegments();
+  }
   if (countIn) {
     countInTimer = tape.ppq * 4;
   }
@@ -365,6 +423,9 @@ function toggleMetronome() {
 function stop() {
   playing = false;
   countInTimer = 0;
+  notesHeld = {};
+  addTrackData(step, "noteOff", getUnfinishedNotes());
+  renderSegments();
   if (step !== startMarker) {
     spinCassette(true);
   }
@@ -375,6 +436,15 @@ function stop() {
 
 function toggleRecording() {
   recording = !recording;
+  if (!recording) {
+    notesHeld = {};
+    addTrackData(step, "noteOff", getUnfinishedNotes());
+    renderSegments();
+  }
+}
+
+function toggleOverdub() {
+  overdub = !overdub;
 }
 
 function changeTrack(track_number) {
@@ -679,6 +749,9 @@ document.addEventListener("keyup", function (event) {
     case "r":
       toggleRecording();
       break;
+    case "R":
+      toggleOverdub();
+      break;
     case "m":
       toggleMetronome();
       break;
@@ -739,15 +812,18 @@ function renderStatus() {
   document.getElementById("recording").innerText = recording
     ? "Recording"
     : "Not recording";
+  document.getElementById("overdub").innerText = overdub
+    ? "Overdub on"
+    : "Overdub off";
   document.getElementById("metronome").innerText = metronome
     ? "Metronome on"
     : "Metronome off";
   document.getElementById("count-in").innerText = countIn
     ? "Count in on"
     : "Count in off";
-  document.getElementById("quantized").innerText = quantize
-    ? "Quantization on"
-    : "Quantization off";
+  // document.getElementById("quantized").innerText = quantize
+  //   ? "Quantization on"
+  //   : "Quantization off";
   tape.tracks.forEach(function (track, index) {
     document.getElementById(`track_${index}`).classList =
       index === currentTrack ? "track current-track" : "track";

@@ -22,9 +22,9 @@ external device (ex: remapped numpad) possible.
 - `p` - Play/pause
 - `P (shift+p)` - Stop
 - `r` - Toggle recording
+- `R` - Toggle overdubbing
 - `m` - Toggle metronome
 - `M (shift+m)` - Toggle count-in
-- `q` - Toggle quantization (locks input to 1/8 notes)
 - `1-4` - Change track
 - `1-4 + up/down` - Change output device
 - `1-4 + left/right` - Change output channel
@@ -42,7 +42,7 @@ start/end points
 point
 - `V (shift+v)` - Pastes all track data between start/end points to current point
 
-If building an external controller, you will need 17 inputs.
+If building an external controller, you will need 16 inputs.
 
 ### The timeline
 
@@ -80,6 +80,7 @@ one MIDI output device + one channel.
 - Since it's JavaScript, the BPM is likely always a little off.
 - The tape runs at a resolution of 48 PPQ. Higher PPQ values make the tape
 run slow.
+- Overdubbing is destructive (just like a real tape) - use it wisely!
 
 ## Development
 
