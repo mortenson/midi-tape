@@ -14,6 +14,9 @@ and channels.
 You can use this to create songs in a more linear, free-form way than with a
 traditional DAW or MIDI sequencer.
 
+Web MIDI isn't supported in many browsers, so please use the latest Chrome and
+do not switch tabs while recording.
+
 ### Controls
 
 All user input is done through the keyboard to make usage with a smaller
