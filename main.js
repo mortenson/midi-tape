@@ -477,6 +477,9 @@ function addEndMarker() {
     endMarker = 0;
   } else if (startMarker < step) {
     endMarker = step;
+  } else if (startMarker >= step) {
+    startMarker = 0;
+    endMarker = step;
   }
 }
 
