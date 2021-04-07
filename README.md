@@ -22,7 +22,7 @@ external device (ex: remapped numpad) possible.
 - `p` - Play/pause
 - `P (shift+p)` - Stop
 - `r` - Toggle recording
-- `R` - Toggle overdubbing
+- `R (shift+r)` - Toggle overdubbing
 - `m` - Toggle metronome
 - `M (shift+m)` - Toggle count-in
 - `1-4` - Change track
