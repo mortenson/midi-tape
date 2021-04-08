@@ -949,4 +949,10 @@ WebMidi.enable((err) => {
     input.addListener("pitchbend", "all", onPitchBend);
     input.addListener("controlchange", "all", onControlChange);
   });
+  WebMidi.addListener("connected", function (e) {
+    renderStatus();
+  });
+  WebMidi.addListener("disconnected", function (e) {
+    renderStatus();
+  });
 });
