@@ -849,16 +849,16 @@ function renderStatus() {
     "input-device"
   ).children[1].innerText = getInputDevice().name;
   if (startMarker > 0) {
-    document.getElementById(
-      "timeline-start-marker"
-    ).style = `left: ${getStepPixelPosition(startMarker)}px; display: block;`;
+    document.getElementById("timeline-start-marker").style = `left: ${
+      getStepPixelPosition(startMarker) - 1
+    }px; display: block;`;
   } else {
     document.getElementById("timeline-start-marker").style = "";
   }
   if (endMarker > 0) {
-    document.getElementById(
-      "timeline-end-marker"
-    ).style = `left: ${getStepPixelPosition(endMarker)}px; display: block;`;
+    document.getElementById("timeline-end-marker").style = `left: ${
+      getStepPixelPosition(endMarker) - 1
+    }px; display: block;`;
   } else {
     document.getElementById("timeline-end-marker").style = "";
   }
