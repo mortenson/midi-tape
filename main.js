@@ -833,13 +833,21 @@ function renderStatus() {
   tape.tracks.forEach(function (track, index) {
     document.getElementById(`track_${index}`).classList =
       index === currentTrack ? "track current-track" : "track";
-    document.getElementById(`output-device-${index}`).innerText = `Track ${
+    document.getElementById(`output-device-${index}`).innerHTML = `<b>Track ${
       index + 1
-    } device: ${getOutputDevice(index).name} (${track.outputChannel})`;
+    }</b>&nbsp;&nbsp;&nbsp;<span></span>`;
+    document.getElementById(
+      `output-device-${index}`
+    ).children[1].innerText = `${getOutputDevice(index).name} (${
+      track.outputChannel
+    })`;
   });
-  document.getElementById("input-device").innerText = `Input device: ${
-    getInputDevice().name
-  }`;
+  document.getElementById(
+    "input-device"
+  ).innerHTML = `<b>Input</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span></span>`;
+  document.getElementById(
+    "input-device"
+  ).children[1].innerText = getInputDevice().name;
   if (startMarker > 0) {
     document.getElementById(
       "timeline-start-marker"

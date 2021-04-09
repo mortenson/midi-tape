@@ -64,20 +64,20 @@
       <div class="track" id="track_2"></div>
       <div class="track" id="track_3"></div>
     </div>
-    <div id="buttons">
-      <button onclick="wipeTape()">Wipe tape</button>
-      <button onclick="save()">Save</button>
-      <button onclick="load()">Load</button>
-      <button onclick="enableWebAudio()" id="webaudio_button">
-        Enable WebAudio
-      </button>
-    </div>
     <div id="config">
-      <div id="input-device">Input device</div>
-      <div id="output-device-0">Track 1 device:</div>
-      <div id="output-device-1">Track 2 device:</div>
-      <div id="output-device-2">Track 3 device:</div>
-      <div id="output-device-3">Track 4 device:</div>
+      <div id="input-device"><b>Input</b></div>
+      <div id="output-device-0"><b>Track 1</b></div>
+      <div id="output-device-1"><b>Track 2</b></div>
+      <div id="output-device-2"><b>Track 3</b></div>
+      <div id="output-device-3"><b>Track 4</b></div>
     </div>
   </body>
+  <div id="buttons">
+    <button onclick="save()">Save</button>
+    <button onclick="load()">Load</button>
+    <button onclick="wipeTape()">Wipe tape</button>
+    <button onclick="enableWebAudio()" id="webaudio_button">
+      Enable WebAudio
+    </button>
+  </div>
 </html>

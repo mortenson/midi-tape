@@ -223,7 +223,24 @@ body.playing .reel-inner {
 }
 
 #buttons {
-  margin-top: 50px;
+  margin: 15px 0;
+}
+
+button {
+  background: transparent;
+  border: 1px solid #dedede;
+  border-radius: 2px;
+  text-transform: uppercase;
+  color: #dedede;
+  padding: 5px 10px;
+  margin-right: 5px;
+  font-size: 12px;
+}
+
+button:hover,
+button:focus {
+  background: #dedede;
+  color: #1e1e1e;
 }
 
 #config {
