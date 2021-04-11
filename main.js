@@ -32,10 +32,11 @@ let spinTimeout;
 let defaultOutputDevice = 0;
 let defaultOutputChannel = 1;
 let tape = {
-  version: 1,
+  version: 2,
   ppq: 48,
   bpm: 110,
   inputDevice: 0,
+  name: "midi-tape",
   tracks: [
     {
       outputDevice: defaultOutputDevice,
@@ -577,7 +578,7 @@ function save() {
     "data:text/plain;charset=utf-8," +
       encodeURIComponent(JSON.stringify(tape, null, 2))
   );
-  element.setAttribute("download", "midi-tape.json");
+  element.setAttribute("download", `${tape.name || "midi-tape"}.json`);
   element.style.display = "none";
   document.body.appendChild(element);
   element.click();
@@ -593,6 +594,7 @@ function load() {
     reader.onload = function (event) {
       lockTape = true;
       tape = JSON.parse(event.target.result);
+      migrateTape(tape);
       storeTape();
       location.reload();
     };
@@ -620,7 +622,7 @@ function spinCassette(backwards) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (!midiReady) {
+  if (event.target.id === "tape-name" || !midiReady) {
     return;
   }
   keysPressed[event.key] = true;
@@ -670,6 +672,10 @@ document.addEventListener("keydown", (event) => {
 });
 
 document.addEventListener("keyup", function (event) {
+  if (event.target.id === "tape-name") {
+    tape.name = event.target.value;
+    return;
+  }
   if (!midiReady) {
     return;
   }
@@ -871,6 +877,7 @@ function renderStatus() {
     document.getElementById("timeline-end-marker").style = "";
     document.getElementById("timeline-marker-bg").style = "display: none;";
   }
+  document.getElementById("tape-name").value = tape.name;
 }
 
 function renderSegments() {
@@ -933,6 +940,13 @@ function renderTimeline() {
 
 // Init code.
 
+function migrateTape(tape) {
+  if (tape.version === 1 && typeof tape.name === "undefined") {
+    tape.name = "midi-tape";
+    tape.version = 2;
+  }
+}
+
 setInterval(function () {
   if (!lockTape) {
     storeTape();
@@ -942,6 +956,7 @@ setInterval(function () {
 localforage.getItem("tape").then(function (value) {
   if (value) {
     tape = value;
+    migrateTape(tape);
     if (midiReady) {
       renderSegments();
       renderTimeline();
