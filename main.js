@@ -848,19 +848,28 @@ function renderStatus() {
   document.getElementById(
     "input-device"
   ).children[1].innerText = getInputDevice().name;
+
+  startMarkerPx = getStepPixelPosition(startMarker);
+  endMarkerPx = getStepPixelPosition(endMarker);
   if (startMarker > 0) {
     document.getElementById("timeline-start-marker").style = `left: ${
-      getStepPixelPosition(startMarker) - 1
+      startMarkerPx - 1
     }px; display: block;`;
   } else {
     document.getElementById("timeline-start-marker").style = "";
   }
   if (endMarker > 0) {
     document.getElementById("timeline-end-marker").style = `left: ${
-      getStepPixelPosition(endMarker) - 1
+      endMarkerPx - 1
     }px; display: block;`;
+    document.getElementById(
+      "timeline-marker-bg"
+    ).style = `left: ${startMarkerPx}px; width:${
+      endMarkerPx - startMarkerPx
+    }px;`;
   } else {
     document.getElementById("timeline-end-marker").style = "";
+    document.getElementById("timeline-marker-bg").style = "display: none;";
   }
 }
 

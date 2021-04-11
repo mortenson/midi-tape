@@ -266,6 +266,16 @@ button:focus {
   background: #caca1e;
 }
 
+#timeline-marker-bg {
+  left: 0px;
+  width: 200px;
+  top: 10px;
+  position: absolute;
+  height: calc(100% - 20px);
+  background: #dedede;
+  opacity: 0.1;
+}
+
 #help {
   margin-left: auto;
 }
