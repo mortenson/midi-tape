@@ -431,7 +431,7 @@ function togglePlay() {
   if (!playing) {
     notesHeld = {};
     playInput = false;
-    inputDeviceStart();
+    inputDeviceStop();
     addTrackData(step, "noteOff", getUnfinishedNotes());
     renderSegments();
   }

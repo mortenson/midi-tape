@@ -44,6 +44,8 @@ start/end points
 - `v` - Pastes the current track's data between start/end points to current
 point
 - `V (shift+v)` - Pastes all track data between start/end points to current point
+- `i + p` - Plays the timeline and tells the input device to play. Useful for
+recording drum machines.
 
 If building an external controller, you will need 16 inputs.
 
