@@ -21,6 +21,7 @@ let countInTimer = 0;
 let timer = new Worker("timer.js");
 let alreadyWiped = {};
 let notesHeld = {};
+let playInput = false;
 
 // Used for user interactions.
 let keysPressed = {};
@@ -147,6 +148,24 @@ function wipeStepData() {
   }
 }
 
+function inputDeviceStart() {
+  input = getInputDevice();
+  getOutputs().forEach(function (output) {
+    if (output.name === input.name) {
+      output.sendStart();
+    }
+  });
+}
+
+function inputDeviceStop() {
+  input = getInputDevice();
+  getOutputs().forEach(function (output) {
+    if (output.name === input.name) {
+      output.sendStop();
+    }
+  });
+}
+
 function tick() {
   if (!playing) {
     return;
@@ -168,6 +187,10 @@ function tick() {
   }
   if (recording && overdub) {
     wipeStepData();
+  }
+  if (playInput) {
+    inputDeviceStart();
+    playInput = false;
   }
   tape.tracks.forEach(function (track, trackNumber) {
     if (typeof track.noteOn[step] !== "undefined") {
@@ -407,6 +430,8 @@ function togglePlay() {
   playing = !playing;
   if (!playing) {
     notesHeld = {};
+    playInput = false;
+    inputDeviceStart();
     addTrackData(step, "noteOff", getUnfinishedNotes());
     renderSegments();
   }
@@ -428,6 +453,8 @@ function stop() {
   playing = false;
   countInTimer = 0;
   notesHeld = {};
+  playInput = false;
+  inputDeviceStop();
   addTrackData(step, "noteOff", getUnfinishedNotes());
   renderSegments();
   if (step !== startMarker) {
@@ -753,6 +780,9 @@ document.addEventListener("keyup", function (event) {
       }
       break;
     case "p":
+      if ("i" in keysPressed) {
+        playInput = true;
+      }
       togglePlay();
       break;
     case "P":
