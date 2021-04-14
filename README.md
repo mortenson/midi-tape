@@ -77,6 +77,17 @@ To save your work long-term, click the "Save" button at the bottom of the
 screen. This will save the tape as JSON, which you can then load back into
 midi-tape when needed.
 
+### Using dummy devices
+
+To avoid errors and allow for easier testing of the tool, dummy/fake input and
+output devices are provided for you. The "Dummy Synth" uses Tone.js and
+supports polyphony and pitch changes. The "Dummy Keyboard" allow you to play
+a C major scale using the keys a, s, d, f, g, h, and j. The k and l keys move
+the octave up and down.
+
+Note that these are not meant to be useful for real recording scenarios, so
+their functionality will always be limited.
+
 ### Notes
 
 - Your input device's MIDI channel is ignored, to keep the idea that one track is

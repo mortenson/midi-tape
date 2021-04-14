@@ -74,7 +74,7 @@ let tape = {
   ],
 };
 
-// A fake MIDI output device for ease of development.
+// Fake MIDI devices for ease of development.
 
 let pitchShifter = new Tone.PitchShift(0).toDestination();
 let synth = new Tone.PolySynth(Tone.Synth).toDestination();
@@ -82,7 +82,7 @@ synth.connect(pitchShifter);
 let metronome_synth = new Tone.Synth().toDestination();
 
 let fakeOutput = {
-  name: "Fake Synth",
+  name: "Dummy Synth",
 };
 
 fakeOutput.playNote = function (note_name, channel, options) {
@@ -104,6 +104,76 @@ fakeOutput.sendPitchBend = function (value, channel) {
 fakeOutput.sendControlChange = function (name, value) {};
 
 fakeOutput.sendClock = function () {};
+
+let fakeInput = {
+  name: "Dummy Keyboard",
+  id: "dummy_keyboard",
+  keysHeld: {},
+  octave: 4,
+};
+
+fakeInput.removeListener = function (type, channel, listener) {};
+
+fakeInput.addListener = function (type, channel, listener) {};
+
+fakeInput.getNoteForKey = function (key) {
+  switch (key) {
+    case "a":
+      return "C";
+    case "s":
+      return "D";
+    case "d":
+      return "E";
+    case "f":
+      return "F";
+    case "g":
+      return "G";
+    case "h":
+      return "A";
+    case "j":
+      return "B";
+  }
+  return "C";
+};
+
+fakeInput.handleKeyUp = function (key) {
+  if (key === "k") {
+    this.octave--;
+    return;
+  } else if (key === "l") {
+    this.octave++;
+    return;
+  }
+  delete this.keysHeld[key];
+  note = this.getNoteForKey(key);
+  onNoteOff({
+    target: {
+      id: this.id,
+    },
+    note: {
+      octave: this.octave,
+      name: note,
+    },
+  });
+};
+
+fakeInput.handleKeyDown = function (key) {
+  if (key === "k" || key === "l" || key in this.keysHeld) {
+    return;
+  }
+  this.keysHeld[key] = true;
+  note = this.getNoteForKey(key);
+  onNoteOn({
+    target: {
+      id: this.id,
+    },
+    velocity: 1,
+    note: {
+      octave: this.octave,
+      name: note,
+    },
+  });
+};
 
 // Main callback for outputting MIDI.
 
@@ -244,12 +314,12 @@ function tick() {
 }
 
 function getInputs() {
-  return WebMidi.inputs;
+  return WebMidi.inputs.concat([fakeInput]);
 }
 
 function getInputDevice() {
   let i = tape.inputDevice;
-  if (i > getInputs().length) {
+  if (i >= getInputs().length) {
     i = 0;
   }
   return getInputs()[i];
@@ -261,7 +331,7 @@ function getOutputs() {
 
 function getOutputDevice(trackNumber) {
   let i = tape.tracks[trackNumber].outputDevice;
-  if (i > getOutputs().length) {
+  if (i >= getOutputs().length) {
     i = 0;
   }
   return getOutputs()[i];
@@ -695,6 +765,19 @@ document.addEventListener("keydown", (event) => {
     case "ArrowDown":
       event.preventDefault();
       break;
+    case "a":
+    case "s":
+    case "d":
+    case "f":
+    case "g":
+    case "h":
+    case "j":
+    case "k":
+    case "l":
+      if (getInputDevice().name === "Dummy Keyboard") {
+        fakeInput.handleKeyDown(event.key);
+      }
+      break;
   }
 });
 
@@ -730,7 +813,7 @@ document.addEventListener("keyup", function (event) {
         arrowTrackChange = true;
       } else if (inputChange) {
         tape.inputDevice++;
-        if (tape.inputDevice >= WebMidi.inputs.length) {
+        if (tape.inputDevice >= getInputs().length) {
           tape.inputDevice = 0;
         }
       } else {
@@ -751,7 +834,7 @@ document.addEventListener("keyup", function (event) {
       } else if (inputChange) {
         tape.inputDevice--;
         if (tape.inputDevice < 0) {
-          tape.inputDevice = WebMidi.inputs.length - 1;
+          tape.inputDevice = getInputs().length - 1;
         }
       } else {
         offset = 1;
@@ -832,6 +915,19 @@ document.addEventListener("keyup", function (event) {
         paste();
       });
       currentTrack = currentTrackBackup;
+      break;
+    case "a":
+    case "s":
+    case "d":
+    case "f":
+    case "g":
+    case "h":
+    case "j":
+    case "k":
+    case "l":
+      if (getInputDevice().name === "Dummy Keyboard") {
+        fakeInput.handleKeyUp(event.key);
+      }
       break;
   }
   renderStatus();
@@ -1000,18 +1096,29 @@ timer.onmessage = (event) => {
   tick();
 };
 
+function addInputListeners(input) {
+  input.removeListener("noteon");
+  input.removeListener("noteoff");
+  input.removeListener("pitchbend");
+  input.removeListener("controlchange");
+  input.addListener("noteon", "all", onNoteOn);
+  input.addListener("noteoff", "all", onNoteOff);
+  input.addListener("pitchbend", "all", onPitchBend);
+  input.addListener("controlchange", "all", onControlChange);
+}
+
 WebMidi.enable((err) => {
   midiReady = true;
   renderSegments();
   renderTimeline();
   renderStatus();
   WebMidi.inputs.forEach(function (input, key) {
-    input.addListener("noteon", "all", onNoteOn);
-    input.addListener("noteoff", "all", onNoteOff);
-    input.addListener("pitchbend", "all", onPitchBend);
-    input.addListener("controlchange", "all", onControlChange);
+    addInputListeners(input);
   });
   WebMidi.addListener("connected", function (e) {
+    if (e.port.type === "input") {
+      addInputListeners(e.port);
+    }
     renderStatus();
   });
   WebMidi.addListener("disconnected", function (e) {
