@@ -10,9 +10,7 @@ function tick() {
   postMessage({});
   timeout = tickRate;
   var offset = performance.now() - lastTick - tickRate;
-  if (offset > 0) {
-    timeout -= offset;
-  }
+  timeout -= offset;
   setTimeout(tick, timeout);
   lastTick = performance.now();
 }
