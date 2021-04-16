@@ -1062,6 +1062,8 @@ function renderSegments() {
 function renderTimeline() {
   document.getElementById("timeline").style =
     "margin-left: calc(50% - " + getStepPixelPosition(step) + "px);";
+  let counterText = String(Math.floor(step / tape.ppq)).padStart(4, "0");
+  document.getElementById("counter").dataset.count = counterText;
 }
 
 // Init code.

@@ -303,3 +303,14 @@ button:focus {
   white-space: nowrap;
   width: 1px;
 }
+
+#counter {
+  text-align: center;
+  font-size: 14px;
+  font-family: monospace;
+  margin-left: 2px;
+}
+
+#counter::before {
+  content: attr(data-count);
+}
