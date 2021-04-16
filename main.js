@@ -31,16 +31,19 @@ let spinTimeout;
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
+let defaultOuputDeviceName = "";
 let defaultOutputChannel = 1;
 let tape = {
-  version: 2,
+  version: 3,
   ppq: 48,
   bpm: 110,
   inputDevice: 0,
+  inputDeviceName: "",
   name: "midi-tape",
   tracks: [
     {
       outputDevice: defaultOutputDevice,
+      outputDeviceName: defaultOuputDeviceName,
       outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
@@ -49,6 +52,7 @@ let tape = {
     },
     {
       outputDevice: defaultOutputDevice,
+      outputDeviceName: defaultOuputDeviceName,
       outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
@@ -57,6 +61,7 @@ let tape = {
     },
     {
       outputDevice: defaultOutputDevice,
+      outputDeviceName: defaultOuputDeviceName,
       outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
@@ -65,6 +70,7 @@ let tape = {
     },
     {
       outputDevice: defaultOutputDevice,
+      outputDeviceName: defaultOuputDeviceName,
       outputChannel: defaultOutputChannel,
       noteOn: {},
       noteOff: {},
@@ -371,6 +377,22 @@ function addTrackData(setStep, property, data) {
   } else {
     tape.tracks[currentTrack][property][setStep] = data;
   }
+}
+
+function setDevicesByName() {
+  outputs = getOutputs();
+  tape.tracks.forEach(function (track) {
+    outputs.forEach(function (output, outputIndex) {
+      if (output.name === track.outputDeviceName) {
+        track.outputDevice = outputIndex;
+      }
+    });
+  });
+  getInputs().forEach(function (input, inputIndex) {
+    if (input.name === tape.inputDeviceName) {
+      tape.inputDevice = inputIndex;
+    }
+  });
 }
 
 // MIDI input callbacks.
@@ -810,6 +832,9 @@ document.addEventListener("keyup", function (event) {
         if (tape.tracks[trackKey].outputDevice >= getOutputs().length) {
           tape.tracks[trackKey].outputDevice = 0;
         }
+        tape.tracks[trackKey].outputDeviceName = getOutputDevice(
+          tape.tracks[trackKey].outputDevice
+        ).name;
         arrowTrackChange = true;
       } else if (inputChange) {
         tape.inputDevice++;
@@ -830,6 +855,9 @@ document.addEventListener("keyup", function (event) {
         if (tape.tracks[trackKey].outputDevice < 0) {
           tape.tracks[trackKey].outputDevice = getOutputs().length - 1;
         }
+        tape.tracks[trackKey].outputDeviceName = getOutputDevice(
+          tape.tracks[trackKey].outputDevice
+        ).name;
         arrowTrackChange = true;
       } else if (inputChange) {
         tape.inputDevice--;
@@ -1073,6 +1101,17 @@ function migrateTape(tape) {
     tape.name = "midi-tape";
     tape.version = 2;
   }
+  if (tape.version === 2) {
+    if (typeof tape.inputDeviceName === "undefined") {
+      tape.inputDeviceName = "";
+    }
+    tape.tracks.forEach(function (track) {
+      if (typeof track.outputDeviceName === "undefined") {
+        track.outputDeviceName = "";
+      }
+    });
+    tape.version = 3;
+  }
 }
 
 setInterval(function () {
@@ -1086,6 +1125,7 @@ localforage.getItem("tape").then(function (value) {
     tape = value;
     migrateTape(tape);
     if (midiReady) {
+      setDevicesByName();
       renderSegments();
       renderTimeline();
       renderStatus();
@@ -1121,6 +1161,7 @@ WebMidi.enable((err) => {
     if (e.port.type === "input") {
       addInputListeners(e.port);
     }
+    setDevicesByName();
     renderStatus();
   });
   WebMidi.addListener("disconnected", function (e) {
