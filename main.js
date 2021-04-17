@@ -28,6 +28,7 @@ let keysPressed = {};
 let arrowTrackChange = false;
 let lockTape = true;
 let spinTimeout;
+let maxStep = 0;
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
@@ -546,6 +547,7 @@ function togglePlay() {
     playInput = false;
     inputDeviceStop();
     addTrackData(step, "noteOff", getUnfinishedNotes());
+    calculateMaxStep();
     renderSegments();
   }
   if (countIn) {
@@ -583,6 +585,7 @@ function toggleRecording() {
   if (!recording) {
     notesHeld = {};
     addTrackData(step, "noteOff", getUnfinishedNotes());
+    calculateMaxStep();
     renderSegments();
   }
 }
@@ -696,6 +699,7 @@ function paste() {
     "noteOff",
     getUnfinishedNotes()
   );
+  calculateMaxStep();
   renderSegments();
 }
 
@@ -952,6 +956,7 @@ document.addEventListener("keyup", function (event) {
       break;
     case "Backspace":
       deleteTrackData("Shift" in keysPressed);
+      calculateMaxStep();
       break;
     case "v":
       paste();
@@ -1113,6 +1118,29 @@ function renderTimeline() {
     "margin-left: calc(50% - " + getStepPixelPosition(step) + "px);";
   let counterText = String(Math.floor(step / tape.ppq)).padStart(4, "0");
   document.getElementById("counter").dataset.count = counterText;
+  let renderMaxStep = maxStep;
+  if (renderMaxStep <= 0) {
+    renderMaxStep = 10000;
+  }
+  let scale = step / renderMaxStep;
+  if (scale > 1) {
+    scale = 1;
+  }
+  document.getElementById("reel-tape-left").style = `transform: scale(${
+    0.3 + scale * 0.7
+  });`;
+  document.getElementById("reel-tape-right").style = `transform: scale(${
+    1 - scale * 0.7
+  });`;
+}
+
+function calculateMaxStep() {
+  tape.tracks.forEach(function (track) {
+    let trackMax = Math.max(...Object.keys(track.noteOn).map(Number));
+    if (trackMax > maxStep) {
+      maxStep = trackMax;
+    }
+  });
 }
 
 // Init code.
@@ -1132,6 +1160,7 @@ localforage.getItem("tape").then(function (value) {
     tape = value;
     migrateTape(tape);
     updateBpm(tape.bpm);
+    calculateMaxStep();
     if (midiReady) {
       setDevicesByName();
       renderSegments();

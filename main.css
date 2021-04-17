@@ -25,6 +25,7 @@ body {
 
 .reel {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   width: 175px;
@@ -53,6 +54,15 @@ body {
   animation: spin 5s infinite;
   animation-timing-function: linear;
   animation-play-state: paused;
+}
+
+.reel-tape {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: #353535;
+  border-radius: 50%;
+  transform: scale(0.3);
 }
 
 #cassette.spin .reel-inner {
