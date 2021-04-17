@@ -25,7 +25,7 @@ external device (ex: remapped numpad) possible.
 - `p` - Play/pause
 - `P (shift+p)` - Stop
 - `r` - Toggle recording
-- `R (shift+r)` - Toggle overdubbing
+- `R (shift+r)` - Toggle replace recording
 - `m` - Toggle metronome
 - `M (shift+m)` - Toggle count-in
 - `1-4` - Change track
@@ -96,7 +96,7 @@ one MIDI output device + one channel.
 - Since it's JavaScript, the BPM is likely always a little off.
 - The tape runs at a resolution of 48 PPQ. Higher PPQ values make the tape
 run slow.
-- Overdubbing is destructive (just like a real tape) - use it wisely!
+- Replacing is destructive (just like a real tape) - use it wisely!
 
 ## Development
 

@@ -10,7 +10,7 @@ let quantize = false;
 let midiReady = false;
 let metronome = true;
 let countIn = false;
-let overdub = false;
+let replace = false;
 
 // Used for recording/playback.
 let currentTrack = 0;
@@ -261,7 +261,7 @@ function tick() {
     countInTimer--;
     return;
   }
-  if (recording && overdub) {
+  if (recording && replace) {
     wipeStepData();
   }
   if (playInput) {
@@ -356,7 +356,7 @@ function quantizeStep(setStep, multiple, mode) {
 }
 
 function addTrackData(setStep, property, data) {
-  if (overdub) {
+  if (replace) {
     delete tape.tracks[currentTrack][property][setStep];
     alreadyWiped[property] = true;
   }
@@ -566,8 +566,8 @@ function toggleRecording() {
   }
 }
 
-function toggleOverdub() {
-  overdub = !overdub;
+function toggleReplace() {
+  replace = !replace;
 }
 
 function changeTrack(track_number) {
@@ -903,7 +903,7 @@ document.addEventListener("keyup", function (event) {
       toggleRecording();
       break;
     case "R":
-      toggleOverdub();
+      toggleReplace();
       break;
     case "m":
       toggleMetronome();
@@ -978,9 +978,9 @@ function renderStatus() {
   document.getElementById("recording").innerText = recording
     ? "Recording"
     : "Not recording";
-  document.getElementById("overdub").innerText = overdub
-    ? "Overdub on"
-    : "Overdub off";
+  document.getElementById("replace").innerText = replace
+    ? "Replace on"
+    : "Replace off";
   document.getElementById("metronome").innerText = metronome
     ? "Metronome on"
     : "Metronome off";
