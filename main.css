@@ -200,6 +200,10 @@ body.playing .reel-inner {
   background: #d82323;
 }
 
+.recording .reel-tape {
+  background: #462a2a;
+}
+
 #timeline-center {
   margin-left: calc(50% - 5px);
   width: 10px;

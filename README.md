@@ -27,6 +27,7 @@ external device (ex: remapped numpad) possible.
 - `r` - Toggle recording
 - `R (shift+r)` - Toggle replace recording
 - `m` - Toggle metronome
+- `m + up/down` - Change beats per bar
 - `M (shift+m)` - Toggle count-in
 - `1-4` - Change track
 - `1-4 + up/down` - Change output device

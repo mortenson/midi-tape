@@ -26,21 +26,24 @@ let playInput = false;
 // Used for user interactions.
 let keysPressed = {};
 let arrowTrackChange = false;
+let arrowBeatChange = false;
 let lockTape = true;
 let spinTimeout;
 let maxStep = 0;
+let beatWidth = 25;
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
 let defaultOuputDeviceName = "";
 let defaultOutputChannel = 1;
 let tape = {
-  version: 3,
+  version: 4,
   ppq: 48,
   bpm: 110,
   inputDevice: 0,
   inputDeviceName: "",
   name: "midi-tape",
+  bpb: 4,
   tracks: [
     {
       outputDevice: defaultOutputDevice,
@@ -248,7 +251,7 @@ function tick() {
     return;
   }
   if (countInTimer > 0) {
-    if (countInTimer % (tape.ppq * 4) === 0) {
+    if (countInTimer % (tape.ppq * tape.bpb) === 0) {
       metronome_synth.triggerAttackRelease("C4", 0.1);
     } else if (countInTimer % tape.ppq === 0) {
       metronome_synth.triggerAttackRelease("C3", 0.1);
@@ -304,7 +307,7 @@ function tick() {
     }
   });
   if (metronome) {
-    if (step % (tape.ppq * 4) === 0) {
+    if (step % (tape.ppq * tape.bpb) === 0) {
       metronome_synth.triggerAttackRelease("C4", 0.1);
     } else if (step % tape.ppq === 0) {
       metronome_synth.triggerAttackRelease("C3", 0.1);
@@ -414,6 +417,9 @@ function migrateTape(tape) {
       }
     });
     tape.version = 3;
+  }
+  if (tape.version === 3 && typeof tape.bpb === "undefined") {
+    tape.bpb = 4;
   }
 }
 
@@ -552,7 +558,7 @@ function togglePlay() {
     renderTimeline();
   }
   if (countIn) {
-    countInTimer = tape.ppq * 4;
+    countInTimer = tape.ppq * tape.bpb;
   }
   stopAllNotes();
 }
@@ -787,7 +793,7 @@ document.addEventListener("keydown", (event) => {
       if (trackKey === false && !playing) {
         if ("Shift" in keysPressed) {
           step += 1;
-          step = quantizeStep(step, tape.ppq * 4, "ceil");
+          step = quantizeStep(step, tape.ppq * tape.bpb, "ceil");
           spinCassette();
         } else {
           step += 10;
@@ -799,7 +805,7 @@ document.addEventListener("keydown", (event) => {
       if (trackKey === false && !playing) {
         if ("Shift" in keysPressed) {
           step -= 1;
-          step = quantizeStep(step, tape.ppq * 4, "floor");
+          step = quantizeStep(step, tape.ppq * tape.bpb, "floor");
           spinCassette(true);
         } else {
           step -= 10;
@@ -841,6 +847,7 @@ document.addEventListener("keyup", function (event) {
   delete keysPressed[event.key];
   let trackKey = false;
   let inputChange = false;
+  let beatChange = false;
   if ("1" in keysPressed) {
     trackKey = 0;
   } else if ("2" in keysPressed) {
@@ -851,6 +858,8 @@ document.addEventListener("keyup", function (event) {
     trackKey = 3;
   } else if ("i" in keysPressed) {
     inputChange = true;
+  } else if ("m" in keysPressed) {
+    beatChange = true;
   }
   switch (event.key) {
     case "ArrowUp":
@@ -859,15 +868,19 @@ document.addEventListener("keyup", function (event) {
         if (tape.tracks[trackKey].outputDevice >= getOutputs().length) {
           tape.tracks[trackKey].outputDevice = 0;
         }
-        tape.tracks[trackKey].outputDeviceName = getOutputDevice(
-          tape.tracks[trackKey].outputDevice
-        ).name;
+        tape.tracks[trackKey].outputDeviceName = getOutputDevice(trackKey).name;
         arrowTrackChange = true;
       } else if (inputChange) {
         tape.inputDevice++;
         if (tape.inputDevice >= getInputs().length) {
           tape.inputDevice = 0;
         }
+      } else if (beatChange) {
+        tape.bpb++;
+        if (tape.bpb > 16) {
+          tape.bpb = 2;
+        }
+        arrowBeatChange = true;
       } else {
         offset = 1;
         if ("Shift" in keysPressed) {
@@ -882,15 +895,19 @@ document.addEventListener("keyup", function (event) {
         if (tape.tracks[trackKey].outputDevice < 0) {
           tape.tracks[trackKey].outputDevice = getOutputs().length - 1;
         }
-        tape.tracks[trackKey].outputDeviceName = getOutputDevice(
-          tape.tracks[trackKey].outputDevice
-        ).name;
+        tape.tracks[trackKey].outputDeviceName = getOutputDevice(trackKey).name;
         arrowTrackChange = true;
       } else if (inputChange) {
         tape.inputDevice--;
         if (tape.inputDevice < 0) {
           tape.inputDevice = getInputs().length - 1;
         }
+      } else if (beatChange) {
+        tape.bpb--;
+        if (tape.bpb < 2) {
+          tape.bpb = 16;
+        }
+        arrowBeatChange = true;
       } else {
         offset = 1;
         if ("Shift" in keysPressed) {
@@ -933,7 +950,10 @@ document.addEventListener("keyup", function (event) {
       toggleReplace();
       break;
     case "m":
-      toggleMetronome();
+      if (!arrowBeatChange) {
+        toggleMetronome();
+      }
+      arrowBeatChange = false;
       break;
     case "M":
       toggleCountIn();
@@ -988,14 +1008,13 @@ document.addEventListener("keyup", function (event) {
       break;
   }
   renderStatus();
+  renderTimeline();
 });
 
 // UI rendering.
 
 function getStepPixelPosition(step) {
-  bar_width = 100;
-  pixel_per_note = bar_width / 4;
-  return (step / tape.ppq) * pixel_per_note;
+  return (step / tape.ppq) * beatWidth;
 }
 
 function renderStatus() {
@@ -1013,6 +1032,7 @@ function renderStatus() {
   document.getElementById("metronome").innerText = metronome
     ? "Metronome on"
     : "Metronome off";
+  document.getElementById("bpb-status").innerText = tape.bpb + " BPB";
   document.getElementById("count-in").innerText = countIn
     ? "Count in on"
     : "Count in off";
@@ -1117,8 +1137,16 @@ function renderSegments() {
 }
 
 function renderTimeline() {
-  document.getElementById("timeline").style =
-    "margin-left: calc(50% - " + getStepPixelPosition(step) + "px);";
+  let backgroundSize = tape.bpb * beatWidth;
+  // Very odd CSS behavior.
+  if (backgroundSize <= 50) {
+    backgroundSize = 51;
+  }
+  document.getElementById(
+    "timeline"
+  ).style = `margin-left: calc(50% - ${getStepPixelPosition(
+    step
+  )}px); background-size: ${backgroundSize}px 1px;`;
   let counterText = String(Math.floor(step / tape.ppq)).padStart(4, "0");
   document.getElementById("counter").dataset.count = counterText;
   let renderMaxStep = maxStep;
