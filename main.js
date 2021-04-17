@@ -549,6 +549,7 @@ function togglePlay() {
     addTrackData(step, "noteOff", getUnfinishedNotes());
     calculateMaxStep();
     renderSegments();
+    renderTimeline();
   }
   if (countIn) {
     countInTimer = tape.ppq * 4;
@@ -587,6 +588,7 @@ function toggleRecording() {
     addTrackData(step, "noteOff", getUnfinishedNotes());
     calculateMaxStep();
     renderSegments();
+    renderTimeline();
   }
 }
 
@@ -957,6 +959,7 @@ document.addEventListener("keyup", function (event) {
     case "Backspace":
       deleteTrackData("Shift" in keysPressed);
       calculateMaxStep();
+      renderTimeline();
       break;
     case "v":
       paste();
@@ -1135,6 +1138,7 @@ function renderTimeline() {
 }
 
 function calculateMaxStep() {
+  maxStep = 0;
   tape.tracks.forEach(function (track) {
     let trackMax = Math.max(...Object.keys(track.noteOn).map(Number));
     if (trackMax > maxStep) {
