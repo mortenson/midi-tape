@@ -395,6 +395,24 @@ function setDevicesByName() {
   });
 }
 
+function migrateTape(tape) {
+  if (tape.version === 1 && typeof tape.name === "undefined") {
+    tape.name = "midi-tape";
+    tape.version = 2;
+  }
+  if (tape.version === 2) {
+    if (typeof tape.inputDeviceName === "undefined") {
+      tape.inputDeviceName = "";
+    }
+    tape.tracks.forEach(function (track) {
+      if (typeof track.outputDeviceName === "undefined") {
+        track.outputDeviceName = "";
+      }
+    });
+    tape.version = 3;
+  }
+}
+
 // MIDI input callbacks.
 
 function onNoteOn(event) {
@@ -1096,23 +1114,9 @@ function renderTimeline() {
 
 // Init code.
 
-function migrateTape(tape) {
-  if (tape.version === 1 && typeof tape.name === "undefined") {
-    tape.name = "midi-tape";
-    tape.version = 2;
-  }
-  if (tape.version === 2) {
-    if (typeof tape.inputDeviceName === "undefined") {
-      tape.inputDeviceName = "";
-    }
-    tape.tracks.forEach(function (track) {
-      if (typeof track.outputDeviceName === "undefined") {
-        track.outputDeviceName = "";
-      }
-    });
-    tape.version = 3;
-  }
-}
+document.addEventListener("visibilitychange", function () {
+  keysPressed = {};
+});
 
 setInterval(function () {
   if (!lockTape) {
@@ -1124,6 +1128,7 @@ localforage.getItem("tape").then(function (value) {
   if (value) {
     tape = value;
     migrateTape(tape);
+    updateBpm(tape.bpm);
     if (midiReady) {
       setDevicesByName();
       renderSegments();
