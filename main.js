@@ -271,6 +271,9 @@ function tick() {
   tape.tracks.forEach(function (track, trackNumber) {
     if (typeof track.noteOn[step] !== "undefined") {
       for (let note in track.noteOn[step]) {
+        if (trackNumber === currentTrack && note in notesHeld) {
+          continue;
+        }
         getOutputDevice(trackNumber).playNote(note, track.outputChannel, {
           velocity: track.noteOn[step][note],
         });
