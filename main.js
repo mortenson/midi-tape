@@ -878,7 +878,7 @@ document.addEventListener("keyup", function (event) {
       } else if (beatChange) {
         tape.bpb++;
         if (tape.bpb > 16) {
-          tape.bpb = 2;
+          tape.bpb = 3;
         }
         arrowBeatChange = true;
       } else {
@@ -904,7 +904,7 @@ document.addEventListener("keyup", function (event) {
         }
       } else if (beatChange) {
         tape.bpb--;
-        if (tape.bpb < 2) {
+        if (tape.bpb < 3) {
           tape.bpb = 16;
         }
         arrowBeatChange = true;
@@ -1138,10 +1138,6 @@ function renderSegments() {
 
 function renderTimeline() {
   let backgroundSize = tape.bpb * beatWidth;
-  // Very odd CSS behavior.
-  if (backgroundSize <= 50) {
-    backgroundSize = 51;
-  }
   document.getElementById(
     "timeline"
   ).style = `margin-left: calc(50% - ${getStepPixelPosition(
