@@ -54,6 +54,8 @@ body {
   animation: spin 5s infinite;
   animation-timing-function: linear;
   animation-play-state: paused;
+  --rotation: 0;
+  transform: rotate(calc(var(--rotation) * 1deg));
 }
 
 .reel-tape {
@@ -66,11 +68,11 @@ body {
 }
 
 #cassette.spin .reel-inner {
-  animation: spin2 1s;
+  animation: spin2 0.5s;
 }
 
 #cassette.spin-back .reel-inner {
-  animation: spin3 1s;
+  animation: spin-back 0.5s;
 }
 
 body:not(.playing) .reel-inner {
@@ -83,19 +85,19 @@ body.playing .reel-inner {
 
 @keyframes spin {
   100% {
-    transform: rotate(360deg);
+    transform: rotate(calc(var(--rotation) * 1deg + 360deg));
   }
 }
 
 @keyframes spin2 {
   100% {
-    transform: rotate(360deg);
+    transform: rotate(calc(var(--rotation) * 1deg + 180deg));
   }
 }
 
-@keyframes spin3 {
+@keyframes spin-back {
   100% {
-    transform: rotate(-360deg);
+    transform: rotate(calc(var(--rotation) * 1deg - 180deg));
   }
 }
 

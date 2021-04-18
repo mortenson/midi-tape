@@ -769,8 +769,22 @@ function spinCassette(backwards) {
   }
   spinTimeout = setTimeout(
     () => (document.getElementById("cassette").classList = ""),
-    1000
+    500
   );
+}
+
+function nudgeCassette(backwards) {
+  if (step <= 0) {
+    return;
+  }
+  let reels = document.querySelectorAll(".reel-inner");
+  reels.forEach(function (reel) {
+    let rotation = parseInt(
+      getComputedStyle(reel).getPropertyValue("--rotation")
+    );
+    rotation += backwards ? -10 : 10;
+    reel.style = `--rotation: ${rotation}`;
+  });
 }
 
 document.addEventListener("keydown", (event) => {
@@ -797,6 +811,7 @@ document.addEventListener("keydown", (event) => {
           spinCassette();
         } else {
           step += 10;
+          nudgeCassette();
         }
         renderTimeline();
       }
@@ -809,6 +824,7 @@ document.addEventListener("keydown", (event) => {
           spinCassette(true);
         } else {
           step -= 10;
+          nudgeCassette(true);
         }
         if (step < 0) {
           step = 0;
@@ -1149,7 +1165,7 @@ function renderTimeline() {
   if (renderMaxStep <= 0) {
     scale = 0;
   } else {
-    scale = step / renderMaxStep
+    scale = step / renderMaxStep;
   }
   if (scale > 1) {
     scale = 1;
