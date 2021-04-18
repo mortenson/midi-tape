@@ -1147,16 +1147,17 @@ function renderTimeline() {
   document.getElementById("counter").dataset.count = counterText;
   let renderMaxStep = maxStep;
   if (renderMaxStep <= 0) {
-    renderMaxStep = 10000;
+    scale = 0;
+  } else {
+    scale = step / renderMaxStep
   }
-  let scale = step / renderMaxStep;
   if (scale > 1) {
     scale = 1;
   }
-  document.getElementById("reel-tape-left").style = `transform: scale(${
+  document.getElementById("reel-tape-right").style = `transform: scale(${
     0.3 + scale * 0.7
   });`;
-  document.getElementById("reel-tape-right").style = `transform: scale(${
+  document.getElementById("reel-tape-left").style = `transform: scale(${
     1 - scale * 0.7
   });`;
 }
