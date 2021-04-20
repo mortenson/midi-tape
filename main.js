@@ -31,6 +31,7 @@ let lockTape = true;
 let spinTimeout;
 let maxStep = 0;
 let beatWidth = 25;
+let debounceRenderSegments = debounce(renderSegments, 100);
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
@@ -423,6 +424,22 @@ function migrateTape(tape) {
   }
 }
 
+function debounce(func, wait, immediate) {
+  var timeout;
+  return function () {
+    var context = this,
+      args = arguments;
+    var later = function () {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+}
+
 // MIDI input callbacks.
 
 function onNoteOn(event) {
@@ -438,7 +455,7 @@ function onNoteOn(event) {
       [event.note.name + event.note.octave]: event.velocity,
     });
     notesHeld[event.note.name + event.note.octave] = true;
-    renderSegments();
+    debounceRenderSegments();
   }
   getOutputDevice(currentTrack).playNote(
     event.note.name + event.note.octave,
@@ -465,7 +482,7 @@ function onNoteOff(event) {
     }
     addTrackData(setStep, "noteOff", [event.note.name + event.note.octave]);
     delete notesHeld[event.note.name + event.note.octave];
-    renderSegments();
+    debounceRenderSegments();
   }
   getOutputDevice(currentTrack).stopNote(
     event.note.name + event.note.octave,
@@ -479,7 +496,7 @@ function onPitchBend(event) {
   }
   if (playing && recording && countInTimer <= 0) {
     addTrackData(step, "pitchbend", event.value);
-    renderSegments();
+    debounceRenderSegments();
   }
   getOutputDevice(currentTrack).sendPitchBend(
     event.value,
@@ -495,7 +512,7 @@ function onControlChange(event) {
     addTrackData(step, "controlchange", {
       [event.controller.name]: event.value,
     });
-    renderSegments();
+    debounceRenderSegments();
   }
   try {
     getOutputDevice(currentTrack).sendControlChange(
