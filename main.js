@@ -894,7 +894,7 @@ document.addEventListener("keyup", function (event) {
       } else if (beatChange) {
         tape.bpb++;
         if (tape.bpb > 16) {
-          tape.bpb = 3;
+          tape.bpb = 2;
         }
         arrowBeatChange = true;
       } else {
@@ -920,7 +920,7 @@ document.addEventListener("keyup", function (event) {
         }
       } else if (beatChange) {
         tape.bpb--;
-        if (tape.bpb < 3) {
+        if (tape.bpb < 2) {
           tape.bpb = 16;
         }
         arrowBeatChange = true;
@@ -1154,9 +1154,15 @@ function renderSegments() {
 
 function renderTimeline() {
   let backgroundSize = tape.bpb * beatWidth;
+  // Hack to fix subpixel rendering for Macs.
+  let extraStyle = "";
+  if (tape.bpb <= 3) {
+    extraStyle =
+      "background: linear-gradient(90deg, #dedede 2%, transparent 2%) 1px 0, #1e1e1e;";
+  }
   document.getElementById(
     "timeline"
-  ).style = `margin-left: calc(50% - ${getStepPixelPosition(
+  ).style = `${extraStyle} margin-left: calc(50% - ${getStepPixelPosition(
     step
   )}px); background-size: ${backgroundSize}px 1px;`;
   let counterText = String(Math.floor(step / tape.ppq)).padStart(4, "0");
