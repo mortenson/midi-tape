@@ -782,7 +782,7 @@ function nudgeCassette(backwards) {
     let rotation = parseInt(
       getComputedStyle(reel).getPropertyValue("--rotation")
     );
-    rotation += backwards ? -10 : 10;
+    rotation += backwards ? 10 : -10;
     reel.style = `--rotation: ${rotation}`;
   });
 }

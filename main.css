@@ -85,19 +85,19 @@ body.playing .reel-inner {
 
 @keyframes spin {
   100% {
-    transform: rotate(calc(var(--rotation) * 1deg + 360deg));
+    transform: rotate(calc(var(--rotation) * 1deg - 360deg));
   }
 }
 
 @keyframes spin2 {
   100% {
-    transform: rotate(calc(var(--rotation) * 1deg + 180deg));
+    transform: rotate(calc(var(--rotation) * 1deg - 180deg));
   }
 }
 
 @keyframes spin-back {
   100% {
-    transform: rotate(calc(var(--rotation) * 1deg - 180deg));
+    transform: rotate(calc(var(--rotation) * 1deg + 180deg));
   }
 }
 
