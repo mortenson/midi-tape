@@ -257,7 +257,7 @@ function tick() {
     } else if (countInTimer % tape.ppq === 0) {
       metronome_synth.triggerAttackRelease("C3", 0.1);
     }
-    renderTimeline();
+    setTimeout(renderTimeline, 0);
     if (countInTimer % (tape.ppq / 24) === 0) {
       getOutputs().forEach(function (output) {
         output.sendClock();
@@ -324,7 +324,7 @@ function tick() {
     stopAllNotes();
     step = startMarker;
   }
-  renderTimeline();
+  setTimeout(renderTimeline, 0);
 }
 
 function getInputs() {
@@ -1181,11 +1181,10 @@ function renderTimeline() {
     extraStyle =
       "background: linear-gradient(90deg, #dedede 2%, transparent 2%) 1px 0, #1e1e1e;";
   }
+  let timelinePosition = getStepPixelPosition(step);
   document.getElementById(
     "timeline"
-  ).style = `${extraStyle} margin-left: calc(50% - ${getStepPixelPosition(
-    step
-  )}px); background-size: ${backgroundSize}px 1px;`;
+  ).style = `${extraStyle} transform: translateX(-${timelinePosition}px); width: calc(100% + ${timelinePosition}px); background-size: ${backgroundSize}px 1px;`;
   let counterText = String(Math.floor(step / tape.ppq)).padStart(4, "0");
   document.getElementById("counter").dataset.count = counterText;
   let renderMaxStep = maxStep;
