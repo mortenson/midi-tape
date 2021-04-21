@@ -527,6 +527,9 @@ function onControlChange(event) {
 
 function getUnfinishedNotes() {
   let unfinishedNotes = [];
+  let sortedNoteOff = Object.keys(tape.tracks[currentTrack].noteOff)
+    .map(Number)
+    .sort((a, b) => a - b);
   for (let i of Object.keys(tape.tracks[currentTrack].noteOn)
     .map(Number)
     .sort((a, b) => a - b)) {
@@ -535,9 +538,7 @@ function getUnfinishedNotes() {
         unfinishedNotes.concat(Object.keys(tape.tracks[currentTrack].noteOn[i]))
       )
     );
-    for (let j of Object.keys(tape.tracks[currentTrack].noteOff)
-      .map(Number)
-      .sort((a, b) => a - b)) {
+    for (let j of sortedNoteOff) {
       if (j < i) {
         continue;
       }
@@ -595,7 +596,7 @@ function stop() {
   playInput = false;
   inputDeviceStop();
   addTrackData(step, "noteOff", getUnfinishedNotes());
-  renderSegments();
+  debounceRenderSegments();
   if (step !== startMarker) {
     spinCassette(true);
   }
@@ -610,7 +611,7 @@ function toggleRecording() {
     notesHeld = {};
     addTrackData(step, "noteOff", getUnfinishedNotes());
     calculateMaxStep();
-    renderSegments();
+    debounceRenderSegments();
     renderTimeline();
   }
 }
@@ -1054,6 +1055,8 @@ function renderStatus() {
   document.body.classList = `${recording ? "recording" : ""} ${
     playing ? "playing" : ""
   }`;
+  // @todo Add this back when Chrome doesn't cache recording icon.
+  // document.getElementById("favicon").href = recording ? "favicon-recording.png" : "favicon.png";
   document.getElementById("bpm-status").innerText = tape.bpm + " BPM";
   document.getElementById("playing").innerText = playing ? "Playing" : "Paused";
   document.getElementById("recording").innerText = recording
@@ -1121,12 +1124,13 @@ function renderSegments() {
     trackElem = document.getElementById(`track_${track_number}`);
     trackElem.innerHTML = "";
     let segments = [];
+    let sortedNoteOff = Object.keys(track.noteOff)
+      .map(Number)
+      .sort((a, b) => a - b);
     for (let i of Object.keys(track.noteOn)
       .map(Number)
       .sort((a, b) => a - b)) {
-      for (let j of Object.keys(track.noteOff)
-        .map(Number)
-        .sort((a, b) => a - b)) {
+      for (let j of sortedNoteOff) {
         if (j < i) {
           continue;
         }
