@@ -364,6 +364,9 @@ function quantizeStep(setStep, multiple, mode) {
 }
 
 function addTrackData(setStep, property, data) {
+  if (data == false) {
+    return;
+  }
   if (replace) {
     delete tape.tracks[currentTrack][property][setStep];
     alreadyWiped[property] = true;
@@ -526,28 +529,27 @@ function onControlChange(event) {
 // Keyboard interaction and callbacks.
 
 function getUnfinishedNotes() {
-  let unfinishedNotes = [];
-  let sortedNoteOff = Object.keys(tape.tracks[currentTrack].noteOff)
-    .map(Number)
-    .sort((a, b) => a - b);
-  for (let i of Object.keys(tape.tracks[currentTrack].noteOn)
-    .map(Number)
-    .sort((a, b) => a - b)) {
-    unfinishedNotes = Array.from(
-      new Set(
-        unfinishedNotes.concat(Object.keys(tape.tracks[currentTrack].noteOn[i]))
-      )
-    );
-    for (let j of sortedNoteOff) {
-      if (j < i) {
-        continue;
+  let noteCount = {};
+  for (let i in tape.tracks[currentTrack].noteOn) {
+    for (let note in tape.tracks[currentTrack].noteOn[i]) {
+      if (!(note in noteCount)) {
+        noteCount[note] = 1;
+      } else {
+        noteCount[note]++;
       }
-      unfinishedNotes = unfinishedNotes.filter(
-        (note) => !tape.tracks[currentTrack].noteOff[j].includes(note)
-      );
     }
   }
-  return unfinishedNotes;
+  for (let i in tape.tracks[currentTrack].noteOff) {
+    tape.tracks[currentTrack].noteOff[i].forEach(function (note) {
+      if (note in noteCount) {
+        noteCount[note]--;
+        if (noteCount[note] <= 0) {
+          delete noteCount[note];
+        }
+      }
+    });
+  }
+  return Object.keys(noteCount);
 }
 
 function enableWebAudio() {
