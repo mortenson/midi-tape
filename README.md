@@ -32,6 +32,7 @@ external device (ex: remapped numpad) possible.
 - `1-4` - Change track
 - `1-4 + up/down` - Change output device
 - `1-4 + left/right` - Change output channel
+- `1-4 + delete` - Delete track
 - `i + up/down` - Change input device
 - `up/down` - Change BPM
 - `shift + up/down` - Change BPM in increments of 10
@@ -48,7 +49,14 @@ point
 - `i + p` - Plays the timeline and tells the input device to play. Useful for
 recording drum machines.
 
-If building an external controller, you will need 16 inputs.
+If you need more than 10 tracks, use the "o" key:
+
+- `o + delete` - Delete current track
+- `o + up/down` - Change track
+- `o + left/right` - Change output device
+- `O (shift+o) + left/right` - Change output channel
+
+If building an external controller, you will need 17 inputs.
 
 ### The timeline
 

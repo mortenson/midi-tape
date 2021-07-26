@@ -27,6 +27,7 @@ let playInput = false;
 let keysPressed = {};
 let arrowTrackChange = false;
 let arrowBeatChange = false;
+let deleteTrackChange = false;
 let lockTape = true;
 let spinTimeout;
 let maxStep = 0;
@@ -35,55 +36,22 @@ let debounceRenderSegments = debounce(renderSegments, 100);
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
-let defaultOuputDeviceName = "";
+let defaultOuputDeviceName = "Dummy Synth";
 let defaultOutputChannel = 1;
 let tape = {
-  version: 4,
+  version: 5,
   ppq: 48,
   bpm: 110,
   inputDevice: 0,
-  inputDeviceName: "",
+  inputDeviceName: "Dummy Keyboard",
   name: "midi-tape",
   bpb: 4,
-  tracks: [
-    {
-      outputDevice: defaultOutputDevice,
-      outputDeviceName: defaultOuputDeviceName,
-      outputChannel: defaultOutputChannel,
-      noteOn: {},
-      noteOff: {},
-      pitchbend: {},
-      controlchange: {},
-    },
-    {
-      outputDevice: defaultOutputDevice,
-      outputDeviceName: defaultOuputDeviceName,
-      outputChannel: defaultOutputChannel,
-      noteOn: {},
-      noteOff: {},
-      pitchbend: {},
-      controlchange: {},
-    },
-    {
-      outputDevice: defaultOutputDevice,
-      outputDeviceName: defaultOuputDeviceName,
-      outputChannel: defaultOutputChannel,
-      noteOn: {},
-      noteOff: {},
-      pitchbend: {},
-      controlchange: {},
-    },
-    {
-      outputDevice: defaultOutputDevice,
-      outputDeviceName: defaultOuputDeviceName,
-      outputChannel: defaultOutputChannel,
-      noteOn: {},
-      noteOff: {},
-      pitchbend: {},
-      controlchange: {},
-    },
-  ],
+  tracks: [],
 };
+addTrack();
+addTrack();
+addTrack();
+addTrack();
 
 // Fake MIDI devices for ease of development.
 
@@ -363,6 +331,35 @@ function quantizeStep(setStep, multiple, mode) {
   }
 }
 
+function addTrack() {
+  tape.tracks.push({
+    outputDevice: defaultOutputDevice,
+    outputDeviceName: defaultOuputDeviceName,
+    outputChannel: defaultOutputChannel,
+    noteOn: {},
+    noteOff: {},
+    pitchbend: {},
+    controlchange: {},
+  });
+}
+
+function removeTrack(track_number) {
+  let track = tape.tracks[track_number];
+  let hasData =
+    track.noteOn.length ||
+    track.noteOff.length ||
+    track.pitchbend.length ||
+    track.controlchange.length;
+  if (
+    hasData &&
+    !confirm("The last track has data, do you still want to remove it?")
+  ) {
+    return;
+  }
+  tape.tracks.splice(track_number, 1);
+  currentTrack = track_number - 1;
+}
+
 function addTrackData(setStep, property, data) {
   if (data == false) {
     return;
@@ -623,6 +620,13 @@ function toggleReplace() {
 }
 
 function changeTrack(track_number) {
+  let diff = track_number - (tape.tracks.length - 1);
+  if (diff > 0) {
+    for (i = 0; i < diff; ++i) {
+      addTrack();
+    }
+    renderSegments();
+  }
   currentTrack = track_number;
 }
 
@@ -736,6 +740,11 @@ function storeTape() {
 }
 
 function wipeTape() {
+  if (
+    !confirm("Are you sure you want to permanently delete the current tape?")
+  ) {
+    return;
+  }
   lockTape = true;
   localforage.clear().then(function () {
     location.reload();
@@ -807,21 +816,38 @@ function nudgeCassette(backwards) {
   });
 }
 
+function getTrackFromKey(key) {
+  let trackKey = false;
+  if (/^[0-9]$/i.test(key)) {
+    trackKey = parseInt(key);
+    if (trackKey === 0) {
+      trackKey = 9;
+    } else if (!isNaN(trackKey)) {
+      trackKey -= 1;
+    } else {
+      trackKey = false;
+    }
+  }
+  return trackKey;
+}
+
+function getPressedTrackKey() {
+  let trackKey = false;
+  for (let keyPressed in keysPressed) {
+    trackKey = getTrackFromKey(keyPressed);
+    if (trackKey !== false) {
+      break;
+    }
+  }
+  return trackKey;
+}
+
 document.addEventListener("keydown", (event) => {
   if (event.target.id === "tape-name" || !midiReady) {
     return;
   }
   keysPressed[event.key] = true;
-  let trackKey = false;
-  if ("1" in keysPressed) {
-    trackKey = 0;
-  } else if ("2" in keysPressed) {
-    trackKey = 1;
-  } else if ("3" in keysPressed) {
-    trackKey = 2;
-  } else if ("4" in keysPressed) {
-    trackKey = 3;
-  }
+  let trackKey = getPressedTrackKey();
   switch (event.key) {
     case "ArrowRight":
       if (trackKey === false && !playing) {
@@ -881,20 +907,12 @@ document.addEventListener("keyup", function (event) {
     return;
   }
   delete keysPressed[event.key];
-  let trackKey = false;
+  let trackKey = getPressedTrackKey();
   let inputChange = false;
   let beatChange = false;
-  if ("1" in keysPressed) {
-    trackKey = 0;
-  } else if ("2" in keysPressed) {
-    trackKey = 1;
-  } else if ("3" in keysPressed) {
-    trackKey = 2;
-  } else if ("4" in keysPressed) {
-    trackKey = 3;
-  } else if ("i" in keysPressed) {
+  if (trackKey === false && "i" in keysPressed) {
     inputChange = true;
-  } else if ("m" in keysPressed) {
+  } else if (trackKey === false && "m" in keysPressed) {
     beatChange = true;
   }
   switch (event.key) {
@@ -1001,9 +1019,16 @@ document.addEventListener("keyup", function (event) {
     case "2":
     case "3":
     case "4":
-      if (!arrowTrackChange) {
-        changeTrack(parseInt(event.key) - 1);
+    case "5":
+    case "6":
+    case "7":
+    case "8":
+    case "9":
+    case "0":
+      if (!arrowTrackChange && !deleteTrackChange) {
+        changeTrack(getTrackFromKey(event.key));
       }
+      deleteTrackChange = false;
       arrowTrackChange = false;
       break;
     case "t":
@@ -1013,9 +1038,17 @@ document.addEventListener("keyup", function (event) {
       addEndMarker();
       break;
     case "Backspace":
-      deleteTrackData("Shift" in keysPressed);
-      calculateMaxStep();
-      renderTimeline();
+      if (trackKey) {
+        deleteTrackChange = true;
+        removeTrack(trackKey);
+        renderSegments();
+        renderTimeline();
+        renderStatus();
+      } else {
+        deleteTrackData("Shift" in keysPressed);
+        calculateMaxStep();
+        renderTimeline();
+      }
       break;
     case "v":
       paste();
@@ -1077,17 +1110,22 @@ function renderStatus() {
   // document.getElementById("quantized").innerText = quantize
   //   ? "Quantization on"
   //   : "Quantization off";
+  document.querySelectorAll(".output-device").forEach((outputElem) => {
+    outputElem.remove();
+  });
   tape.tracks.forEach(function (track, index) {
     document.getElementById(`track_${index}`).classList =
       index === currentTrack ? "track current-track" : "track";
-    document.getElementById(`output-device-${index}`).innerHTML = `<b>Track ${
+    let outputElem = document.createElement("div");
+    outputElem.setAttribute("id", `output-device-${index}`);
+    outputElem.setAttribute("class", "output-device");
+    outputElem.innerHTML = `<b>Track ${
       index + 1
     }</b>&nbsp;&nbsp;&nbsp;<span></span>`;
-    document.getElementById(
-      `output-device-${index}`
-    ).children[1].innerText = `${getOutputDevice(index).name} (${
+    outputElem.children[1].innerText = `${getOutputDevice(index).name} (${
       track.outputChannel
     })`;
+    document.getElementById("config").appendChild(outputElem);
   });
   document.getElementById(
     "input-device"
@@ -1122,9 +1160,15 @@ function renderStatus() {
 }
 
 function renderSegments() {
+  document.querySelectorAll(".track").forEach((trackElem) => {
+    trackElem.remove();
+  });
   tape.tracks.forEach(function (track, track_number) {
-    trackElem = document.getElementById(`track_${track_number}`);
-    trackElem.innerHTML = "";
+    let trackElem = document.createElement("div");
+    trackElem.setAttribute("id", `track_${track_number}`);
+    trackElem.classList =
+      track_number === currentTrack ? "track current-track" : "track";
+    document.getElementById("timeline").appendChild(trackElem);
     let segments = [];
     let sortedNoteOff = Object.keys(track.noteOff)
       .map(Number)
@@ -1232,11 +1276,11 @@ localforage.getItem("tape").then(function (value) {
   if (value) {
     tape = value;
     migrateTape(tape);
+    renderSegments();
     updateBpm(tape.bpm);
     calculateMaxStep();
     if (midiReady) {
       setDevicesByName();
-      renderSegments();
       renderTimeline();
       renderStatus();
     }
