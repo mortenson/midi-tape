@@ -116,11 +116,23 @@ fakeInput.getNoteForKey = function (key) {
 };
 
 fakeInput.handleKeyUp = function (key) {
-  if (key === "k") {
-    this.octave--;
-    return;
-  } else if (key === "l") {
-    this.octave++;
+  if (key === "k" || key === "l") {
+    // Release all held keys.
+    for (var key in this.keysHeld) {
+      let note = this.getNoteForKey(key);
+      onNoteOff({
+        target: {
+          id: this.id,
+        },
+        velocity: 1,
+        note: {
+          octave: this.octave,
+          name: note,
+        },
+      });
+    }
+    this.keysHeld = {};
+    this.octave += key === "k" ? -1 : 1;
     return;
   }
   delete this.keysHeld[key];
