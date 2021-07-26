@@ -358,13 +358,15 @@ function addTrack() {
 function removeTrack(track_number) {
   let track = tape.tracks[track_number];
   let hasData =
-    track.noteOn.length ||
-    track.noteOff.length ||
-    track.pitchbend.length ||
-    track.controlchange.length;
+    Object.keys(track.noteOn).length ||
+    Object.keys(track.noteOff).length ||
+    Object.keys(track.pitchbend).length ||
+    Object.keys(track.controlchange).length;
   if (
     hasData &&
-    !confirm("The last track has data, do you still want to remove it?")
+    !confirm(
+      `Track ${track_number} has recorded data, do you still want to remove it?`
+    )
   ) {
     return;
   }
@@ -844,6 +846,9 @@ function getTrackFromKey(key) {
 }
 
 function getPressedTrackKey() {
+  if ("O" in keysPressed || ("Shift" in keysPressed && "o" in keysPressed)) {
+    return currentTrack;
+  }
   let trackKey = false;
   for (let keyPressed in keysPressed) {
     trackKey = getTrackFromKey(keyPressed);
@@ -919,13 +924,20 @@ document.addEventListener("keyup", function (event) {
     return;
   }
   delete keysPressed[event.key];
+  delete keysPressed[event.key.toLowerCase()];
+  delete keysPressed[event.key.toUpperCase()];
   let trackKey = getPressedTrackKey();
   let inputChange = false;
   let beatChange = false;
-  if (trackKey === false && "i" in keysPressed) {
-    inputChange = true;
-  } else if (trackKey === false && "m" in keysPressed) {
-    beatChange = true;
+  let trackChange = false;
+  if (trackKey === false) {
+    if ("i" in keysPressed) {
+      inputChange = true;
+    } else if ("m" in keysPressed) {
+      beatChange = true;
+    } else if ("o" in keysPressed) {
+      trackChange = true;
+    }
   }
   switch (event.key) {
     case "ArrowUp":
@@ -947,6 +959,11 @@ document.addEventListener("keyup", function (event) {
           tape.bpb = 2;
         }
         arrowBeatChange = true;
+      } else if (trackChange) {
+        currentTrack -= 1;
+        if (currentTrack < 0) {
+          currentTrack = 0;
+        }
       } else {
         offset = 1;
         if ("Shift" in keysPressed) {
@@ -974,6 +991,8 @@ document.addEventListener("keyup", function (event) {
           tape.bpb = 16;
         }
         arrowBeatChange = true;
+      } else if (trackChange) {
+        changeTrack((currentTrack += 1));
       } else {
         offset = 1;
         if ("Shift" in keysPressed) {

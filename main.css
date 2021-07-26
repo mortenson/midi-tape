@@ -5,6 +5,8 @@ body {
   text-transform: uppercase;
   font-size: 14px;
   overflow-x: hidden;
+  position: absolute;
+  width: 100%;
 }
 
 * {
