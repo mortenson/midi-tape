@@ -710,6 +710,15 @@ function paste() {
     return;
   }
   pushUndo();
+  if (replace) {
+    let lastStep = endMarker - startMarker + step;
+    for (let i = step; i <= lastStep; ++i) {
+      delete tape.tracks[currentTrack].noteOn[i];
+      delete tape.tracks[currentTrack].noteOff[i];
+      delete tape.tracks[currentTrack].pitchbend[i];
+      delete tape.tracks[currentTrack].controlchange[i];
+    }
+  }
   for (let i = startMarker; i <= endMarker; ++i) {
     relativeStep = i - startMarker;
     pasteStep = relativeStep + step;
