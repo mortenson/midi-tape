@@ -48,6 +48,8 @@ point
 - `V (shift+v)` - Pastes all track data between start/end points to current point
 - `i + p` - Plays the timeline and tells the input device to play. Useful for
 recording drum machines.
+- `u` - Undo (for track deletion, note deletion, recording sessions, and paste)
+- `U (shift+u)` - Redo
 
 If you need more than 10 tracks, use the "o" key instead of the numerical keys:
 
@@ -55,8 +57,6 @@ If you need more than 10 tracks, use the "o" key instead of the numerical keys:
 - `O (shift+o) + delete` - Delete current track
 - `O (shift+o) + left/right` - Change output device
 - `O (shift+o) + left/right` - Change output channel
-
-If building an external controller, you will need 17 inputs.
 
 ### The timeline
 

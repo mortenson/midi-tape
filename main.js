@@ -52,6 +52,8 @@ addTrack();
 addTrack();
 addTrack();
 addTrack();
+let tapeUndo = [];
+let tapeRedo = [];
 
 // Fake MIDI devices for ease of development.
 
@@ -118,7 +120,7 @@ fakeInput.getNoteForKey = function (key) {
 fakeInput.handleKeyUp = function (key) {
   if (key === "k" || key === "l") {
     // Release all held keys.
-    for (var key in this.keysHeld) {
+    for (let key in this.keysHeld) {
       let note = this.getNoteForKey(key);
       onNoteOff({
         target: {
@@ -356,22 +358,10 @@ function addTrack() {
 }
 
 function removeTrack(track_number) {
-  let track = tape.tracks[track_number];
-  let hasData =
-    Object.keys(track.noteOn).length ||
-    Object.keys(track.noteOff).length ||
-    Object.keys(track.pitchbend).length ||
-    Object.keys(track.controlchange).length;
-  if (
-    hasData &&
-    !confirm(
-      `Track ${track_number} has recorded data, do you still want to remove it?`
-    )
-  ) {
-    return;
-  }
+  pushUndo();
   tape.tracks.splice(track_number, 1);
   currentTrack = track_number - 1;
+  calculateMaxStep();
 }
 
 function addTrackData(setStep, property, data) {
@@ -439,15 +429,15 @@ function migrateTape(tape) {
 }
 
 function debounce(func, wait, immediate) {
-  var timeout;
+  let timeout;
   return function () {
-    var context = this,
+    let context = this,
       args = arguments;
-    var later = function () {
+    let later = function () {
       timeout = null;
       if (!immediate) func.apply(context, args);
     };
-    var callNow = immediate && !timeout;
+    let callNow = immediate && !timeout;
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
     if (callNow) func.apply(context, args);
@@ -626,6 +616,8 @@ function toggleRecording() {
     calculateMaxStep();
     debounceRenderSegments();
     renderTimeline();
+  } else {
+    pushUndo();
   }
 }
 
@@ -690,6 +682,7 @@ function toggleCountIn() {
 
 function deleteTrackData(pitch_cc_only) {
   if (endMarker > 0) {
+    pushUndo();
     for (let i = startMarker; i <= endMarker; ++i) {
       if (!pitch_cc_only) {
         if (typeof tape.tracks[currentTrack].noteOn[i] !== "undefined") {
@@ -716,6 +709,7 @@ function paste() {
   if (playing || endMarker === 0 || step === startMarker) {
     return;
   }
+  pushUndo();
   for (let i = startMarker; i <= endMarker; ++i) {
     relativeStep = i - startMarker;
     pasteStep = relativeStep + step;
@@ -857,6 +851,32 @@ function getPressedTrackKey() {
     }
   }
   return trackKey;
+}
+
+function undo() {
+  if (!tapeUndo.length) {
+    return;
+  }
+  pushRedo();
+  tape = JSON.parse(tapeUndo.pop());
+  calculateMaxStep();
+}
+
+function redo() {
+  if (!tapeRedo.length) {
+    return;
+  }
+  pushUndo();
+  tape = JSON.parse(tapeRedo.pop());
+  calculateMaxStep();
+}
+
+function pushUndo() {
+  tapeUndo.push(JSON.stringify(tape));
+}
+
+function pushRedo() {
+  tapeRedo.push(JSON.stringify(tape));
 }
 
 document.addEventListener("keydown", (event) => {
@@ -1107,6 +1127,14 @@ document.addEventListener("keyup", function (event) {
       if (getInputDevice().name === "Dummy Keyboard") {
         fakeInput.handleKeyUp(event.key);
       }
+      break;
+    case "u":
+      undo();
+      renderSegments();
+      break;
+    case "U":
+      redo();
+      renderSegments();
       break;
   }
   renderStatus();
