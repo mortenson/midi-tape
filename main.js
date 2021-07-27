@@ -1070,7 +1070,9 @@ document.addEventListener("keyup", function (event) {
       break;
     case "Backspace":
       if (trackKey) {
-        deleteTrackChange = true;
+        if (!("o" in keysPressed || "O" in keysPressed)) {
+          deleteTrackChange = true;
+        }
         removeTrack(trackKey);
         renderSegments();
         renderTimeline();
