@@ -925,7 +925,13 @@ function toggleMonitor() {
       return;
     }
     navigator.getUserMedia(
-      { audio: true },
+      {
+        audio: {
+          echoCancellation: false,
+          autoGainControl: false,
+          noiseSuppression: false,
+        },
+      },
       (stream) => {
         audioContext = new AudioContext();
         microphone = audioContext.createMediaStreamSource(stream);
