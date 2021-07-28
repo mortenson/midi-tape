@@ -33,6 +33,13 @@ let spinTimeout;
 let maxStep = 0;
 let beatWidth = 25;
 let debounceRenderSegments = debounce(renderSegments, 100);
+let audioContext;
+let microphone;
+let monitor = false;
+let recordAudio = false;
+let mediaRecorder;
+let audioChunks = [];
+let lockKeyboard = false;
 
 // A tape is data that should persist.
 let defaultOutputDevice = 0;
@@ -305,6 +312,13 @@ function tick() {
   if (endMarker !== 0 && endMarker < step) {
     stopAllNotes();
     step = startMarker;
+  }
+  if (recordAudio && step > maxStep + tape.ppq * tape.bpb) {
+    if (mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    stop();
+    lockKeyboard = false;
   }
   setTimeout(renderTimeline, 0);
 }
@@ -888,8 +902,97 @@ function pushRedo() {
   tapeRedo.push(JSON.stringify(tape));
 }
 
+function doToggleMonitor() {
+  monitor = !monitor;
+  if (monitor) {
+    microphone.connect(audioContext.destination);
+  } else {
+    microphone.disconnect();
+  }
+  document.getElementById("monitor_button").innerText = monitor
+    ? "Stop monitoring"
+    : "Monitor audio";
+  document.getElementById("record_button").disabled = !monitor;
+}
+
+function toggleMonitor() {
+  if (!microphone) {
+    if (
+      !confirm(
+        "Are you ready to monitor your browser's default input? If you're not wearing headphones and the default is your microphone, you could be in for a nasty feedback loop."
+      )
+    ) {
+      return;
+    }
+    navigator.getUserMedia(
+      { audio: true },
+      (stream) => {
+        audioContext = new AudioContext();
+        microphone = audioContext.createMediaStreamSource(stream);
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: "audio/webm",
+        });
+        mediaRecorder.ondataavailable = (e) => {
+          audioChunks.push(e.data);
+        };
+        mediaRecorder.onstop = onMediaRecorderStop;
+        doToggleMonitor();
+      },
+      () => {
+        alert("Error configuring microphone.");
+      }
+    );
+  } else {
+    doToggleMonitor();
+  }
+}
+
+function onMediaRecorderStop() {
+  if (!recordAudio) {
+    return;
+  }
+  let blob = new Blob(audioChunks, { type: "audio/webm" });
+  let audioURL = window.URL.createObjectURL(blob);
+
+  let element = document.createElement("a");
+  element.setAttribute("href", audioURL);
+  element.setAttribute("download", `${tape.name || "midi-tape"}.webm`);
+  element.style.display = "none";
+  document.body.appendChild(element);
+  element.click();
+
+  toggleRecordAudio();
+}
+
+function toggleRecordAudio() {
+  recordAudio = !recordAudio;
+  document.getElementById("record_button").innerText = recordAudio
+    ? "Cancel recording"
+    : "Record audio";
+  step = 0;
+  metronome = false;
+  startMarker = 0;
+  endMarker = 0;
+  countIn = false;
+  countInTimer = 0;
+  recording = false;
+  stop();
+  if (recordAudio) {
+    audioChunks = [];
+    mediaRecorder.start();
+    togglePlay();
+    lockKeyboard = true;
+  } else {
+    if (mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    lockKeyboard = false;
+  }
+  renderStatus();
+}
+
 document.addEventListener("keydown", (event) => {
-  if (event.target.id === "tape-name" || !midiReady) {
+  if (event.target.id === "tape-name" || !midiReady || lockKeyboard) {
     return;
   }
   keysPressed[event.key] = true;
@@ -949,7 +1052,7 @@ document.addEventListener("keyup", function (event) {
     tape.name = event.target.value;
     return;
   }
-  if (!midiReady) {
+  if (!midiReady || lockKeyboard) {
     return;
   }
   delete keysPressed[event.key];

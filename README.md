@@ -97,6 +97,18 @@ the octave up and down.
 Note that these are not meant to be useful for real recording scenarios, so
 their functionality will always be limited.
 
+### Monitoring and recording audio
+
+Since it can be a bit difficult to monitor the output of your synths while
+listening to midi-tape's metronome, you can click "Monitor Audio" and have your
+browser's default input played through the default output. This is also useful
+for quick jam sessions without opening a DAW or using something like JACK.
+
+While monitoring, you can click "Record Audio", which will lock keyboard
+controls, go to the start of the tape, and play it through while recording
+everything that's monitored. Once finished, .webm file will be downloaded. I
+would have preferred .wav, but the browser APIs for this are pretty limited.
+
 ### Notes
 
 - Your input device's MIDI channel is ignored, to keep the idea that one track is

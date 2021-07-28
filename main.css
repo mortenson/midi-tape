@@ -256,10 +256,14 @@ button {
   font-size: 12px;
 }
 
-button:hover,
-button:focus {
+button:not(:disabled):hover,
+button:not(:disabled):focus {
   background: #dedede;
   color: #1e1e1e;
+}
+
+button:disabled {
+  opacity: 0.5;
 }
 
 #config {
