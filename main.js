@@ -999,66 +999,50 @@ function toggleRecordAudio() {
 }
 
 function exportMidi() {
-  let midiFile = new Midi.File();
-
-  let stepOffset = tape.ppq / 128;
+  let smf = new JZZ.MIDI.SMF(0, tape.ppq);
 
   calculateMaxStep();
 
   tape.tracks.forEach(function (track, trackNumber) {
-    let midiTrack = new Midi.Track();
+    let trk = new JZZ.MIDI.SMF.MTrk();
+    smf.push(trk);
 
-    // midiTrack.addEvent(new Midi.MetaEvent({type: Midi.MetaEvent.TRACK_NAME, data: `Track ${trackNumber+1}` }));
-    // midiTrack.setTempo(tape.bpm);
-    midiTrack.setInstrument(0, trackNumber % 79);
-    for (var i = 0; i <= maxStep; ++i) {
-      let midiStep = Math.round(i * stepOffset);
+    for (let i = 0; i <= maxStep; ++i) {
+      let midiStep = i;
       if (typeof track.noteOn[i] !== "undefined") {
-        for (var note in track.noteOn[i]) {
-          midiTrack.addNoteOn(
-            0,
-            note.toLowerCase(),
+        for (let note in track.noteOn[i]) {
+          trk.add(
             midiStep,
-            track.noteOn[i][note] * 100
+            JZZ.MIDI.noteOn(0, note, 127 * track.noteOn[i][note])
           );
         }
       }
       if (typeof track.noteOff[i] !== "undefined") {
         track.noteOff[i].forEach(function (note) {
-          midiTrack.addNoteOff(0, note.toLowerCase(), midiStep);
+          trk.add(midiStep, JZZ.MIDI.noteOff(0, note));
         });
       }
       if (typeof track.pitchbend[i] !== "undefined") {
-        midiTrack.addEvent(
-          new Midi.MidiEvent({
-            type: Midi.MetaEvent.PITCH_BEND,
-            channel: 0,
-            param1: track.pitchbend[i],
-            time: midiStep,
-          })
-        );
+        trk.add(midiStep, JZZ.MIDI.pitchBend(0, track.pitchbend[i]));
       }
       if (typeof track.controlchange[i] !== "undefined") {
         for (let name in track.controlchange[i]) {
-          midiTrack.addEvent(
-            new Midi.MidiEvent({
-              type: Midi.MetaEvent.CONTROLLER,
-              channel: 0,
-              param1: name,
-              param2: track.controlchange[i][name],
-              time: midiStep,
-            })
+          let controller = WebMidi.MIDI_CONTROL_CHANGE_MESSAGES[name];
+          if (controller === undefined) {
+            console.log(`Couldn't find controller for ${name}.`);
+            continue;
+          }
+          trk.add(
+            midiStep,
+            JZZ.MIDI.control(0, controller, track.controlchange[i][name])
           );
         }
       }
     }
-    midiFile.addTrack(midiTrack);
   });
 
-  let blob = new Blob([midiFile.toBytes()], { type: "audio/midi" });
-  let midiUrl = window.URL.createObjectURL(blob);
   let element = document.createElement("a");
-  midiUrl = "data:audio/midi;base64," + btoa(midiFile.toBytes());
+  midiUrl = "data:audio/midi;base64," + btoa(smf.dump());
   element.setAttribute("href", midiUrl);
   element.setAttribute("download", `${tape.name || "midi-tape"}.mid`);
   element.style.display = "none";

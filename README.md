@@ -109,6 +109,15 @@ controls, go to the start of the tape, and play it through while recording
 everything that's monitored. Once finished, .webm file will be downloaded. I
 would have preferred .wav, but the browser APIs for this are pretty limited.
 
+### Exporting a MIDI file
+
+If you're finished recording but want to edit some of the MIDI manually, you
+can click "Export MIDI" to download your tape as a .mid file.
+
+Note that this is a one-way operation, you cannot import MIDI files as parsing
+them accurately given midi-tape's limited feature set could result in data
+loss.
+
 ### Notes
 
 - Your input device's MIDI channel is ignored, to keep the idea that one track is
