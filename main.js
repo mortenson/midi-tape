@@ -1006,6 +1006,7 @@ function exportMidi() {
   tape.tracks.forEach(function (track, trackNumber) {
     let trk = new JZZ.MIDI.SMF.MTrk();
     smf.push(trk);
+    trk.add(0, JZZ.MIDI.smfBPM(tape.bpm));
 
     for (let i = 0; i <= maxStep; ++i) {
       let midiStep = i;
