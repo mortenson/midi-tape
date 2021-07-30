@@ -27,15 +27,15 @@ external device (ex: remapped numpad) possible.
 - `r` - Toggle recording
 - `R (shift+r)` - Toggle replace recording
 - `m` - Toggle metronome
-- `m + up/down` - Change beats per bar
+- `m + up/down` - Change beats per minute
+- `m + left/right` - Change beats per bar
 - `M (shift+m)` - Toggle count-in
 - `1-9/0` - Change track
 - `1-9/0 + up/down` - Change output device
 - `1-9/0 + left/right` - Change output channel
 - `1-9/0 + delete` - Delete track
 - `i + up/down` - Change input device
-- `up/down` - Change BPM
-- `shift + up/down` - Change BPM in increments of 10
+- `up/down` - Change track
 - `left/right` - Move tape
 - `shift + left/right` - Move tape to next/previous bar
 - `t` - Add/clear start point
@@ -53,10 +53,10 @@ recording drum machines.
 
 If you need more than 10 tracks, use the "o" key instead of the numerical keys:
 
-- `o + up/down` - Change track
-- `O (shift+o) + delete` - Delete current track
-- `O (shift+o) + left/right` - Change output device
-- `O (shift+o) + left/right` - Change output channel
+- `O (shift+o)` - Add a track
+- `o + delete` - Delete current track
+- `o + up/down` - Change output device
+- `o + left/right` - Change output channel
 
 ### The timeline
 

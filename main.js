@@ -640,14 +640,10 @@ function toggleReplace() {
 }
 
 function changeTrack(track_number) {
-  let diff = track_number - (tape.tracks.length - 1);
-  if (diff > 0) {
-    for (i = 0; i < diff; ++i) {
-      addTrack();
-    }
-    renderSegments();
-  }
-  currentTrack = track_number;
+  currentTrack =
+    track_number < 0
+      ? tape.tracks.length - 1
+      : track_number % tape.tracks.length;
 }
 
 function addStartMarker() {
@@ -863,7 +859,7 @@ function getTrackFromKey(key) {
 }
 
 function getPressedTrackKey() {
-  if ("O" in keysPressed || ("Shift" in keysPressed && "o" in keysPressed)) {
+  if ("o" in keysPressed) {
     return currentTrack;
   }
   let trackKey = false;
@@ -1058,9 +1054,10 @@ document.addEventListener("keydown", (event) => {
   }
   keysPressed[event.key] = true;
   let trackKey = getPressedTrackKey();
+  let arrowBeatChange = "m" in keysPressed;
   switch (event.key) {
     case "ArrowRight":
-      if (trackKey === false && !playing) {
+      if (trackKey === false && !arrowBeatChange && !playing) {
         if ("Shift" in keysPressed) {
           step += 1;
           step = quantizeStep(step, tape.ppq * tape.bpb, "ceil");
@@ -1073,7 +1070,7 @@ document.addEventListener("keydown", (event) => {
       }
       break;
     case "ArrowLeft":
-      if (trackKey === false && !playing) {
+      if (trackKey === false && !arrowBeatChange && !playing) {
         if ("Shift" in keysPressed) {
           step -= 1;
           step = quantizeStep(step, tape.ppq * tape.bpb, "floor");
@@ -1122,14 +1119,11 @@ document.addEventListener("keyup", function (event) {
   let trackKey = getPressedTrackKey();
   let inputChange = false;
   let beatChange = false;
-  let trackChange = false;
   if (trackKey === false) {
     if ("i" in keysPressed) {
       inputChange = true;
-    } else if ("m" in keysPressed) {
+    } else if ("m" in keysPressed || "M" in keysPressed) {
       beatChange = true;
-    } else if ("o" in keysPressed) {
-      trackChange = true;
     }
   }
   switch (event.key) {
@@ -1147,22 +1141,14 @@ document.addEventListener("keyup", function (event) {
           tape.inputDevice = 0;
         }
       } else if (beatChange) {
-        tape.bpb++;
-        if (tape.bpb > 16) {
-          tape.bpb = 2;
-        }
-        arrowBeatChange = true;
-      } else if (trackChange) {
-        currentTrack -= 1;
-        if (currentTrack < 0) {
-          currentTrack = 0;
-        }
-      } else {
         offset = 1;
-        if ("Shift" in keysPressed) {
+        if ("Shift" in keysPressed || "M" in keysPressed) {
           offset = 10;
         }
         updateBpm(tape.bpm + offset);
+        arrowBeatChange = true;
+      } else {
+        changeTrack(currentTrack - 1);
       }
       break;
     case "ArrowDown":
@@ -1179,19 +1165,14 @@ document.addEventListener("keyup", function (event) {
           tape.inputDevice = getInputs().length - 1;
         }
       } else if (beatChange) {
-        tape.bpb--;
-        if (tape.bpb < 2) {
-          tape.bpb = 16;
-        }
-        arrowBeatChange = true;
-      } else if (trackChange) {
-        changeTrack((currentTrack += 1));
-      } else {
         offset = 1;
-        if ("Shift" in keysPressed) {
+        if ("Shift" in keysPressed || "M" in keysPressed) {
           offset = 10;
         }
         updateBpm(tape.bpm - offset);
+        arrowBeatChange = true;
+      } else {
+        changeTrack((currentTrack += 1));
       }
       break;
     case "ArrowRight":
@@ -1201,6 +1182,12 @@ document.addEventListener("keyup", function (event) {
           tape.tracks[trackKey].outputChannel = 1;
         }
         arrowTrackChange = true;
+      } else if (beatChange) {
+        tape.bpb++;
+        if (tape.bpb > 16) {
+          tape.bpb = 2;
+        }
+        arrowBeatChange = true;
       }
       break;
     case "ArrowLeft":
@@ -1210,6 +1197,12 @@ document.addEventListener("keyup", function (event) {
           tape.tracks[trackKey].outputChannel = 16;
         }
         arrowTrackChange = true;
+      } else if (beatChange) {
+        tape.bpb--;
+        if (tape.bpb < 2) {
+          tape.bpb = 16;
+        }
+        arrowBeatChange = true;
       }
       break;
     case "p":
@@ -1234,7 +1227,10 @@ document.addEventListener("keyup", function (event) {
       arrowBeatChange = false;
       break;
     case "M":
-      toggleCountIn();
+      if (!arrowBeatChange) {
+        toggleCountIn();
+      }
+      arrowBeatChange = false;
       break;
     case "q":
       toggleQuantize();
@@ -1263,7 +1259,7 @@ document.addEventListener("keyup", function (event) {
       break;
     case "Backspace":
       if (trackKey) {
-        if (!("o" in keysPressed || "O" in keysPressed)) {
+        if (!("o" in keysPressed)) {
           deleteTrackChange = true;
         }
         removeTrack(trackKey);
@@ -1307,6 +1303,11 @@ document.addEventListener("keyup", function (event) {
       break;
     case "U":
       redo();
+      renderSegments();
+      break;
+    case "O":
+      addTrack();
+      currentTrack = tape.tracks.length - 1;
       renderSegments();
       break;
   }
