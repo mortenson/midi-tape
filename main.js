@@ -966,6 +966,7 @@ function onMediaRecorderStop() {
   element.style.display = "none";
   document.body.appendChild(element);
   element.click();
+  document.body.removeElement(element);
 
   toggleRecordAudio();
 }
@@ -995,6 +996,75 @@ function toggleRecordAudio() {
     lockKeyboard = false;
   }
   renderStatus();
+}
+
+function exportMidi() {
+  let midiFile = new Midi.File();
+
+  let stepOffset = tape.ppq / 128;
+
+  calculateMaxStep();
+
+  tape.tracks.forEach(function (track, trackNumber) {
+    let midiTrack = new Midi.Track();
+
+    // midiTrack.addEvent(new Midi.MetaEvent({type: Midi.MetaEvent.TRACK_NAME, data: `Track ${trackNumber+1}` }));
+    // midiTrack.setTempo(tape.bpm);
+    midiTrack.setInstrument(0, trackNumber % 79);
+    for (var i = 0; i <= maxStep; ++i) {
+      let midiStep = Math.round(i * stepOffset);
+      if (typeof track.noteOn[i] !== "undefined") {
+        for (var note in track.noteOn[i]) {
+          midiTrack.addNoteOn(
+            0,
+            note.toLowerCase(),
+            midiStep,
+            track.noteOn[i][note] * 100
+          );
+        }
+      }
+      if (typeof track.noteOff[i] !== "undefined") {
+        track.noteOff[i].forEach(function (note) {
+          midiTrack.addNoteOff(0, note.toLowerCase(), midiStep);
+        });
+      }
+      if (typeof track.pitchbend[i] !== "undefined") {
+        midiTrack.addEvent(
+          new Midi.MidiEvent({
+            type: Midi.MetaEvent.PITCH_BEND,
+            channel: 0,
+            param1: track.pitchbend[i],
+            time: midiStep,
+          })
+        );
+      }
+      if (typeof track.controlchange[i] !== "undefined") {
+        for (let name in track.controlchange[i]) {
+          midiTrack.addEvent(
+            new Midi.MidiEvent({
+              type: Midi.MetaEvent.CONTROLLER,
+              channel: 0,
+              param1: name,
+              param2: track.controlchange[i][name],
+              time: midiStep,
+            })
+          );
+        }
+      }
+    }
+    midiFile.addTrack(midiTrack);
+  });
+
+  let blob = new Blob([midiFile.toBytes()], { type: "audio/midi" });
+  let midiUrl = window.URL.createObjectURL(blob);
+  let element = document.createElement("a");
+  midiUrl = "data:audio/midi;base64," + btoa(midiFile.toBytes());
+  element.setAttribute("href", midiUrl);
+  element.setAttribute("download", `${tape.name || "midi-tape"}.mid`);
+  element.style.display = "none";
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
 }
 
 document.addEventListener("keydown", (event) => {
@@ -1432,7 +1502,11 @@ function renderTimeline() {
 function calculateMaxStep() {
   maxStep = 0;
   tape.tracks.forEach(function (track) {
-    let trackMax = Math.max(...Object.keys(track.noteOn).map(Number));
+    let allNotes = Object.keys(track.noteOff)
+      .concat(Object.keys(track.noteOn))
+      .concat(Object.keys(track.pitchbend))
+      .concat(Object.keys(track.controlchange));
+    let trackMax = Math.max(...allNotes.map(Number));
     if (trackMax > maxStep) {
       maxStep = trackMax;
     }

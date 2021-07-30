@@ -6,11 +6,12 @@
   "scripts": {
     "start": "http-server -c-1 .",
     "prettier": "prettier --write *.html *.js *.css",
-    "build-assets": "cp node_modules/localforage/dist/localforage.min.js lib && cp node_modules/webmidi/webmidi.min.js lib && cp node_modules/tone/build/Tone.js lib"
+    "build-assets": "cp node_modules/jsmidgen/lib/jsmidgen.js lib && cp node_modules/localforage/dist/localforage.min.js lib && cp node_modules/webmidi/webmidi.min.js lib && cp node_modules/tone/build/Tone.js lib"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jsmidgen": "^0.1.5",
     "localforage": "^1.9.0",
     "tone": "^14.7.77",
     "webmidi": "^2.5.2"
