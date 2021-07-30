@@ -1556,6 +1556,7 @@ WebMidi.enable((err) => {
     renderStatus();
   });
   WebMidi.addListener("disconnected", function (e) {
+    setDevicesByName();
     renderStatus();
   });
 });
