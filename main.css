@@ -23,6 +23,10 @@ body {
   border: 2px solid #dedede;
   padding: 20px;
   border-radius: 5px;
+  /* Quick hack to give more vertical space */
+  transform: scale(0.7);
+  margin-bottom: -30px;
+  margin-top: -10px;
 }
 
 .reel {
@@ -155,7 +159,6 @@ body.playing .reel-inner {
 
 #status {
   display: flex;
-  margin-bottom: 20px;
 }
 
 #status > * {
@@ -267,7 +270,7 @@ button:disabled {
 }
 
 #config {
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 #config > div {
