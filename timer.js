@@ -3,9 +3,11 @@ var ppq = 48;
 var bpm = 110;
 var tickRate = 60000 / (bpm * ppq);
 var nums = [];
+var numIndex = 0;
 
 function debugTiming(offset) {
-  nums.push(offset);
+  nums[numIndex % 1000] = offset;
+  numIndex++;
   var average = nums.reduce((a, b) => a + b) / nums.length;
   console.log("Average offset ", average);
 }
