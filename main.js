@@ -67,7 +67,13 @@ let tapeRedo = [];
 let pitchShifter = new Tone.PitchShift(0).toDestination();
 let synth = new Tone.PolySynth(Tone.Synth).toDestination();
 synth.connect(pitchShifter);
-let metronome_synth = new Tone.Synth().toDestination();
+let metronome_synth = new Tone.Synth({
+  volume: -6,
+}).toDestination();
+metronome_synth.envelope.release = 0.1;
+metronome_synth.envelope.attack = 0.005;
+metronome_synth.envelope.decay = 0;
+metronome_synth.envelope.sustain = 0.1;
 
 let fakeOutput = {
   name: "Dummy Synth",
