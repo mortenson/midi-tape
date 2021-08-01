@@ -1,5 +1,5 @@
 var lastTick = 0;
-var ppq = 48;
+var ppq = 24;
 var bpm = 110;
 var tickRate = 60000 / (bpm * ppq);
 var nums = [];
@@ -13,15 +13,16 @@ function debugTiming(offset) {
 }
 
 function tick() {
+  let now = performance.now();
   if (lastTick === 0) {
-    lastTick = performance.now();
+    lastTick = now;
   }
   postMessage({});
   timeout = tickRate;
-  var offset = performance.now() - lastTick - tickRate;
+  var offset = now - lastTick - tickRate;
   timeout -= offset;
   setTimeout(tick, timeout);
-  lastTick = performance.now();
+  lastTick = now;
 }
 
 tick();

@@ -47,7 +47,7 @@ let defaultOuputDeviceName = "Dummy Synth";
 let defaultOutputChannel = 1;
 let tape = {
   version: 5,
-  ppq: 48,
+  ppq: 24,
   bpm: 110,
   inputDevice: 0,
   inputDeviceName: "Dummy Keyboard",

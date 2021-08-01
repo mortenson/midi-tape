@@ -124,8 +124,8 @@ loss.
 one MIDI output device + one channel.
 - A MIDI clock is sent to all outputs every quarter note.
 - Since it's JavaScript, the BPM is likely always a little off.
-- The tape runs at a resolution of 48 PPQ. Higher PPQ values make the tape
-run slow.
+- The tape runs at a resolution of 24 PPQ. Higher PPQ values make the tape run
+inconsistently.
 - Replacing is destructive (just like a real tape) - use it wisely!
 
 ## Development
