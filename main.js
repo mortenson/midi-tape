@@ -22,11 +22,14 @@ let timer = new Worker("timer.js");
 let alreadyWiped = {};
 let notesHeld = {};
 let playInput = false;
+let quantizeLevel = 2;
+let justQuantized = {};
 
 // Used for user interactions.
 let keysPressed = {};
 let arrowTrackChange = false;
 let arrowBeatChange = false;
+let arrowQuantizeChange = false;
 let deleteTrackChange = false;
 let lockTape = true;
 let spinTimeout;
@@ -271,7 +274,10 @@ function tick() {
   tape.tracks.forEach(function (track, trackNumber) {
     if (typeof track.noteOn[step] !== "undefined") {
       for (let note in track.noteOn[step]) {
-        if (trackNumber === currentTrack && note in notesHeld) {
+        if (
+          trackNumber === currentTrack &&
+          (note in notesHeld || note in justQuantized)
+        ) {
           continue;
         }
         getOutputDevice(trackNumber).playNote(note, track.outputChannel, {
@@ -281,6 +287,10 @@ function tick() {
     }
     if (typeof track.noteOff[step] !== "undefined") {
       track.noteOff[step].forEach(function (note) {
+        if (trackNumber === currentTrack && note in justQuantized) {
+          delete justQuantized[note];
+          return;
+        }
         getOutputDevice(trackNumber).stopNote(note, track.outputChannel);
       });
     }
@@ -470,19 +480,21 @@ function onNoteOn(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
+  let note = event.note.name + event.note.octave;
   if (playing && recording && countInTimer <= 0) {
     setStep = step;
     if (quantize) {
-      setStep = quantizeStep(setStep, tape.ppq / 2);
+      setStep = quantizeStep(setStep, tape.ppq / quantizeLevel);
+      justQuantized[note] = [step, setStep];
     }
     addTrackData(setStep, "noteOn", {
-      [event.note.name + event.note.octave]: event.velocity,
+      [note]: event.velocity,
     });
-    notesHeld[event.note.name + event.note.octave] = true;
+    notesHeld[note] = true;
     debounceRenderSegments();
   }
   getOutputDevice(currentTrack).playNote(
-    event.note.name + event.note.octave,
+    note,
     tape.tracks[currentTrack].outputChannel,
     {
       velocity: event.velocity,
@@ -494,22 +506,25 @@ function onNoteOff(event) {
   if (getInputDevice().id !== event.target.id) {
     return;
   }
+  let note = event.note.name + event.note.octave;
   if (playing && recording && countInTimer <= 0) {
     setStep = step;
-    if (quantize) {
-      newStep = quantizeStep(setStep, tape.ppq / 2);
-      // Prevent notes from being cut off by having the same start+end time.
-      if (newStep < setStep) {
-        newStep = quantizeStep(setStep + tape.ppq / 2, tape.ppq / 2);
+    // Note lengths are not quantized, we only shift the note off events by the
+    // same amount as the note on events.
+    if (quantize && note in justQuantized) {
+      let diff = justQuantized[note][1] - justQuantized[note][0];
+      setStep += diff;
+      // tick() will delete future note offs for us.
+      if (setStep <= step) {
+        delete justQuantized[note];
       }
-      setStep = newStep;
     }
-    addTrackData(setStep, "noteOff", [event.note.name + event.note.octave]);
-    delete notesHeld[event.note.name + event.note.octave];
+    addTrackData(setStep, "noteOff", [note]);
+    delete notesHeld[note];
     debounceRenderSegments();
   }
   getOutputDevice(currentTrack).stopNote(
-    event.note.name + event.note.octave,
+    note,
     tape.tracks[currentTrack].outputChannel
   );
 }
@@ -589,6 +604,7 @@ function stopAllNotes() {
 
 function togglePlay() {
   playing = !playing;
+  justQuantized = {};
   if (!playing) {
     notesHeld = {};
     playInput = false;
@@ -616,6 +632,7 @@ function stop() {
   playing = false;
   countInTimer = 0;
   notesHeld = {};
+  justQuantized = {};
   playInput = false;
   inputDeviceStop();
   addTrackData(step, "noteOff", getUnfinishedNotes());
@@ -630,6 +647,7 @@ function stop() {
 
 function toggleRecording() {
   recording = !recording;
+  justQuantized = {};
   if (!recording) {
     notesHeld = {};
     addTrackData(step, "noteOff", getUnfinishedNotes());
@@ -646,6 +664,7 @@ function toggleReplace() {
 }
 
 function changeTrack(track_number) {
+  justQuantized = {};
   currentTrack =
     track_number < 0
       ? tape.tracks.length - 1
@@ -1061,9 +1080,15 @@ document.addEventListener("keydown", (event) => {
   keysPressed[event.key] = true;
   let trackKey = getPressedTrackKey();
   let arrowBeatChange = "m" in keysPressed;
+  let arrowQuantizeChange = "q" in keysPressed;
   switch (event.key) {
     case "ArrowRight":
-      if (trackKey === false && !arrowBeatChange && !playing) {
+      if (
+        trackKey === false &&
+        !arrowBeatChange &&
+        !playing &&
+        !arrowQuantizeChange
+      ) {
         if ("Shift" in keysPressed) {
           step += 1;
           step = quantizeStep(step, tape.ppq * tape.bpb, "ceil");
@@ -1076,7 +1101,12 @@ document.addEventListener("keydown", (event) => {
       }
       break;
     case "ArrowLeft":
-      if (trackKey === false && !arrowBeatChange && !playing) {
+      if (
+        trackKey === false &&
+        !arrowBeatChange &&
+        !playing &&
+        !arrowQuantizeChange
+      ) {
         if ("Shift" in keysPressed) {
           step -= 1;
           step = quantizeStep(step, tape.ppq * tape.bpb, "floor");
@@ -1125,11 +1155,14 @@ document.addEventListener("keyup", function (event) {
   let trackKey = getPressedTrackKey();
   let inputChange = false;
   let beatChange = false;
+  let quantizeChange = false;
   if (trackKey === false) {
     if ("i" in keysPressed) {
       inputChange = true;
     } else if ("m" in keysPressed || "M" in keysPressed) {
       beatChange = true;
+    } else if ("q" in keysPressed) {
+      quantizeChange = true;
     }
   }
   switch (event.key) {
@@ -1153,6 +1186,12 @@ document.addEventListener("keyup", function (event) {
         }
         updateBpm(tape.bpm + offset);
         arrowBeatChange = true;
+      } else if (quantizeChange) {
+        quantizeLevel *= 2;
+        if (quantizeLevel > 4) {
+          quantizeLevel = 4;
+        }
+        arrowQuantizeChange = true;
       } else {
         changeTrack(currentTrack - 1);
       }
@@ -1177,6 +1216,12 @@ document.addEventListener("keyup", function (event) {
         }
         updateBpm(tape.bpm - offset);
         arrowBeatChange = true;
+      } else if (quantizeChange) {
+        quantizeLevel /= 2;
+        if (quantizeLevel < 1) {
+          quantizeLevel = 1;
+        }
+        arrowQuantizeChange = true;
       } else {
         changeTrack((currentTrack += 1));
       }
@@ -1239,7 +1284,10 @@ document.addEventListener("keyup", function (event) {
       arrowBeatChange = false;
       break;
     case "q":
-      toggleQuantize();
+      if (!arrowQuantizeChange) {
+        toggleQuantize();
+      }
+      arrowQuantizeChange = false;
       break;
     case "1":
     case "2":
@@ -1348,9 +1396,9 @@ function renderStatus() {
   document.getElementById("count-in").innerText = countIn
     ? "Count in on"
     : "Count in off";
-  // document.getElementById("quantized").innerText = quantize
-  //   ? "Quantization on"
-  //   : "Quantization off";
+  document.getElementById("quantized").innerText = quantize
+    ? `Quantize on (1/${quantizeLevel * 4})`
+    : "Quantize off";
   document.querySelectorAll(".output-device").forEach((outputElem) => {
     outputElem.remove();
   });

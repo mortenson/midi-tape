@@ -50,6 +50,8 @@ point
 recording drum machines.
 - `u` - Undo (for track deletion, note deletion, recording sessions, and paste)
 - `U (shift+u)` - Redo
+- `q` - Toggle quantization
+- `q + up/down` - Change quantization level
 
 If you need more than 10 tracks, use the "o" key instead of the numerical keys:
 
