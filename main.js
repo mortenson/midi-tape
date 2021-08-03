@@ -24,6 +24,7 @@ let notesHeld = {};
 let playInput = false;
 let quantizeLevel = 2;
 let justQuantized = {};
+let justNoteOn = {};
 
 // Used for user interactions.
 let keysPressed = {};
@@ -280,6 +281,7 @@ function tick() {
         ) {
           continue;
         }
+        justNoteOn[trackNumber + ":" + note] = true;
         getOutputDevice(trackNumber).playNote(note, track.outputChannel, {
           velocity: track.noteOn[step][note],
         });
@@ -291,6 +293,7 @@ function tick() {
           delete justQuantized[note];
           return;
         }
+        delete justNoteOn[trackNumber + ":" + note];
         getOutputDevice(trackNumber).stopNote(note, track.outputChannel);
       });
     }
@@ -493,6 +496,7 @@ function onNoteOn(event) {
     notesHeld[note] = true;
     debounceRenderSegments();
   }
+  justNoteOn[currentTrack + ":" + note] = true;
   getOutputDevice(currentTrack).playNote(
     note,
     tape.tracks[currentTrack].outputChannel,
@@ -523,6 +527,7 @@ function onNoteOff(event) {
     delete notesHeld[note];
     debounceRenderSegments();
   }
+  delete justNoteOn[currentTrack + ":" + note];
   getOutputDevice(currentTrack).stopNote(
     note,
     tape.tracks[currentTrack].outputChannel
@@ -600,6 +605,11 @@ function stopAllNotes() {
   tape.tracks.forEach(function (track, trackNumber) {
     getOutputDevice(trackNumber).sendPitchBend(0);
   });
+  for (let key in justNoteOn) {
+    let parts = key.split(":");
+    getOutputDevice(parts[0]).stopNote(parts[1]);
+  }
+  justNoteOn = {};
 }
 
 function togglePlay() {
