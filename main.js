@@ -25,6 +25,7 @@ let playInput = false;
 let quantizeLevel = 2;
 let justQuantized = {};
 let justNoteOn = {};
+let soloing = false;
 
 // Used for user interactions.
 let keysPressed = {};
@@ -273,6 +274,9 @@ function tick() {
     playInput = false;
   }
   tape.tracks.forEach(function (track, trackNumber) {
+    if (soloing && trackNumber !== currentTrack) {
+      return;
+    }
     if (typeof track.noteOn[step] !== "undefined") {
       for (let note in track.noteOn[step]) {
         if (
@@ -618,6 +622,7 @@ function togglePlay() {
   if (!playing) {
     notesHeld = {};
     playInput = false;
+    soloing = false;
     inputDeviceStop();
     addTrackData(step, "noteOff", getUnfinishedNotes());
     calculateMaxStep();
@@ -1269,6 +1274,8 @@ document.addEventListener("keyup", function (event) {
     case "p":
       if ("i" in keysPressed) {
         playInput = true;
+      } else if ("o" in keysPressed) {
+        soloing = true;
       }
       togglePlay();
       break;
