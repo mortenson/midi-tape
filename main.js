@@ -1194,6 +1194,7 @@ document.addEventListener("keyup", function (event) {
         if (tape.inputDevice >= getInputs().length) {
           tape.inputDevice = 0;
         }
+        tape.inputDeviceName = getInputDevice().name;
       } else if (beatChange) {
         offset = 1;
         if ("Shift" in keysPressed || "M" in keysPressed) {
@@ -1224,6 +1225,7 @@ document.addEventListener("keyup", function (event) {
         if (tape.inputDevice < 0) {
           tape.inputDevice = getInputs().length - 1;
         }
+        tape.inputDeviceName = getInputDevice().name;
       } else if (beatChange) {
         offset = 1;
         if ("Shift" in keysPressed || "M" in keysPressed) {
