@@ -253,9 +253,9 @@ function tick() {
   }
   if (countInTimer > 0) {
     if (countInTimer % (tape.ppq * tape.bpb) === 0) {
-      metronome_synth.triggerAttackRelease("C4", 0.1);
+      metronome_synth.triggerAttackRelease("C4", 0.1, Tone.context.currentTime);
     } else if (countInTimer % tape.ppq === 0) {
-      metronome_synth.triggerAttackRelease("C3", 0.1);
+      metronome_synth.triggerAttackRelease("C3", 0.1, Tone.context.currentTime);
     }
     setTimeout(renderTimeline, 0);
     if (countInTimer % (tape.ppq / 24) === 0) {
@@ -321,9 +321,9 @@ function tick() {
   });
   if (metronome) {
     if (step % (tape.ppq * tape.bpb) === 0) {
-      metronome_synth.triggerAttackRelease("C4", 0.1);
+      metronome_synth.triggerAttackRelease("C4", 0.1, Tone.context.currentTime);
     } else if (step % tape.ppq === 0) {
-      metronome_synth.triggerAttackRelease("C3", 0.1);
+      metronome_synth.triggerAttackRelease("C3", 0.1, Tone.context.currentTime);
     }
   }
   if (step % (tape.ppq / 24) === 0) {
