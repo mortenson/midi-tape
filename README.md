@@ -112,6 +112,11 @@ controls, go to the start of the tape, and play it through while recording
 everything that's monitored. Once finished, .webm file will be downloaded. I
 would have preferred .wav, but the browser APIs for this are pretty limited.
 
+Once downloaded, you can convert the .webm file with a command like:
+```
+ffmpeg -i ~/Downloads/midi-tape.webm -vn ~/Downloads/midi-tape.mp3
+```
+
 ### Exporting a MIDI file
 
 If you're finished recording but want to edit some of the MIDI manually, you
