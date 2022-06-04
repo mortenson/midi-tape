@@ -247,16 +247,22 @@ function inputDeviceStop() {
   });
 }
 
+function playMetronome(currentStep) {
+  if (currentStep % (tape.ppq * tape.bpb) === 0) {
+    metronome_synth.triggerAttack("C4", Tone.context.currentTime);
+    metronome_synth.triggerRelease(Tone.context.currentTime + 0.05);
+  } else if (currentStep % tape.ppq === 0) {
+    metronome_synth.triggerAttack("C3", Tone.context.currentTime);
+    metronome_synth.triggerRelease(Tone.context.currentTime + 0.05);
+  }
+}
+
 function tick() {
   if (!playing) {
     return;
   }
   if (countInTimer > 0) {
-    if (countInTimer % (tape.ppq * tape.bpb) === 0) {
-      metronome_synth.triggerAttackRelease("C4", 0.1, Tone.context.currentTime);
-    } else if (countInTimer % tape.ppq === 0) {
-      metronome_synth.triggerAttackRelease("C3", 0.1, Tone.context.currentTime);
-    }
+    playMetronome(countInTimer);
     setTimeout(renderTimeline, 0);
     if (countInTimer % (tape.ppq / 24) === 0) {
       getOutputs().forEach(function (output) {
@@ -320,11 +326,7 @@ function tick() {
     }
   });
   if (metronome) {
-    if (step % (tape.ppq * tape.bpb) === 0) {
-      metronome_synth.triggerAttackRelease("C4", 0.1, Tone.context.currentTime);
-    } else if (step % tape.ppq === 0) {
-      metronome_synth.triggerAttackRelease("C3", 0.1, Tone.context.currentTime);
-    }
+    playMetronome(step);
   }
   if (step % (tape.ppq / 24) === 0) {
     getOutputs().forEach(function (output) {
@@ -332,7 +334,7 @@ function tick() {
     });
   }
   step++;
-  if (endMarker !== 0 && endMarker < step) {
+  if (endMarker !== 0 && endMarker <= step) {
     stopAllNotes();
     step = startMarker;
   }
@@ -733,7 +735,7 @@ function toggleCountIn() {
 function deleteTrackData(pitch_cc_only) {
   if (endMarker > 0) {
     pushUndo();
-    for (let i = startMarker; i <= endMarker; ++i) {
+    for (let i = startMarker; i < endMarker; ++i) {
       if (!pitch_cc_only) {
         if (typeof tape.tracks[currentTrack].noteOn[i] !== "undefined") {
           delete tape.tracks[currentTrack].noteOn[i];
@@ -761,7 +763,7 @@ function paste() {
   }
   pushUndo();
   if (replace) {
-    let lastStep = endMarker - startMarker + step;
+    let lastStep = endMarker - 1 - startMarker + step;
     for (let i = step; i <= lastStep; ++i) {
       delete tape.tracks[currentTrack].noteOn[i];
       delete tape.tracks[currentTrack].noteOff[i];
@@ -769,7 +771,7 @@ function paste() {
       delete tape.tracks[currentTrack].controlchange[i];
     }
   }
-  for (let i = startMarker; i <= endMarker; ++i) {
+  for (let i = startMarker; i < endMarker; ++i) {
     relativeStep = i - startMarker;
     pasteStep = relativeStep + step;
     if (typeof tape.tracks[currentTrack].noteOn[i] !== "undefined") {

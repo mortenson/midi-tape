@@ -18,10 +18,7 @@ function tick() {
     lastTick = now;
   }
   postMessage({});
-  timeout = tickRate;
-  var offset = now - lastTick - tickRate;
-  timeout -= offset;
-  setTimeout(tick, timeout);
+  setTimeout(tick, tickRate);
   lastTick = now;
 }
 
