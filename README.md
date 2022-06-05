@@ -52,6 +52,7 @@ machines
 - `U (shift+u)` - Redo
 - `q` - Toggle quantization
 - `q + up/down` - Change quantization level
+- `q + left/right` - Change quantization strength
 
 If you need more than 10 tracks, use the "o" key instead of the numerical keys:
 

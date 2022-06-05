@@ -23,6 +23,7 @@ let alreadyWiped = {};
 let notesHeld = {};
 let playInput = false;
 let quantizeLevel = 2;
+let quantizeStrength = 100;
 let justQuantized = {};
 let justNoteOn = {};
 let soloing = false;
@@ -494,6 +495,8 @@ function onNoteOn(event) {
     setStep = step;
     if (quantize) {
       setStep = quantizeStep(setStep, tape.ppq / quantizeLevel);
+      let difference = Math.round((setStep - step) * (quantizeStrength / 100));
+      setStep = step + difference;
       justQuantized[note] = [step, setStep];
     }
     addTrackData(setStep, "noteOn", {
@@ -1096,8 +1099,8 @@ document.addEventListener("keydown", (event) => {
   }
   keysPressed[event.key] = true;
   let trackKey = getPressedTrackKey();
-  let arrowBeatChange = "m" in keysPressed;
-  let arrowQuantizeChange = "q" in keysPressed;
+  let arrowBeatChange = "m" in keysPressed || "M" in keysPressed;
+  let arrowQuantizeChange = "q" in keysPressed || "Q" in keysPressed;
   switch (event.key) {
     case "ArrowRight":
       if (
@@ -1178,7 +1181,7 @@ document.addEventListener("keyup", function (event) {
       inputChange = true;
     } else if ("m" in keysPressed || "M" in keysPressed) {
       beatChange = true;
-    } else if ("q" in keysPressed) {
+    } else if ("q" in keysPressed || "Q" in keysPressed) {
       quantizeChange = true;
     }
   }
@@ -1258,6 +1261,16 @@ document.addEventListener("keyup", function (event) {
           tape.bpb = 2;
         }
         arrowBeatChange = true;
+      } else if (quantizeChange) {
+        let offset = 1;
+        if ("Shift" in keysPressed || "Q" in keysPressed) {
+          offset = 10;
+        }
+        quantizeStrength += offset;
+        if (quantizeStrength > 100) {
+          quantizeStrength = 100;
+        }
+        arrowQuantizeChange = true;
       }
       break;
     case "ArrowLeft":
@@ -1273,6 +1286,16 @@ document.addEventListener("keyup", function (event) {
           tape.bpb = 16;
         }
         arrowBeatChange = true;
+      } else if (quantizeChange) {
+        let offset = 1;
+        if ("Shift" in keysPressed || "Q" in keysPressed) {
+          offset = 10;
+        }
+        quantizeStrength -= offset;
+        if (quantizeStrength <= 0) {
+          quantizeStrength = 1;
+        }
+        arrowQuantizeChange = true;
       }
       break;
     case "p":
@@ -1418,7 +1441,7 @@ function renderStatus() {
     ? "Count in on"
     : "Count in off";
   document.getElementById("quantized").innerText = quantize
-    ? `Quantize on (1/${quantizeLevel * 4})`
+    ? `Quantize on (1/${quantizeLevel * 4}) (${quantizeStrength}%)`
     : "Quantize off";
   document.querySelectorAll(".output-device").forEach((outputElem) => {
     outputElem.remove();
