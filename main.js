@@ -250,11 +250,9 @@ function inputDeviceStop() {
 
 function playMetronome(currentStep) {
   if (currentStep % (tape.ppq * tape.bpb) === 0) {
-    metronome_synth.triggerAttack("C4", Tone.now());
-    metronome_synth.triggerRelease(Tone.now() + 0.05);
+    metronome_synth.triggerAttackRelease("C4", 0.05, Tone.context.currentTime, 0.9);
   } else if (currentStep % tape.ppq === 0) {
-    metronome_synth.triggerAttack("C3", Tone.now());
-    metronome_synth.triggerRelease(Tone.now() + 0.05);
+    metronome_synth.triggerAttackRelease("C3", 0.05, Tone.context.currentTime, 0.9);
   }
 }
 

@@ -136,6 +136,9 @@ one MIDI output device + one channel.
 - The tape runs at a resolution of 24 PPQ. Higher PPQ values make the tape run
 inconsistently.
 - Replacing is destructive (just like a real tape) - use it wisely!
+- You will have to manage MIDI input delays yourself - for Linux, try
+installing a package like Ubuntu's `linux-lowlatency`. For Windows, try using
+ASIO4All Driver.
 
 ## Development
 
