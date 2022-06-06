@@ -86,7 +86,7 @@ let fakeOutput = {
 };
 
 fakeOutput.playNote = function (note_name, channel, options) {
-  synth.triggerAttack(note_name, Tone.now(), options.velocity ?? 1);
+  synth.triggerAttack(note_name, Tone.context.currentTime, options.velocity ?? 1);
 };
 
 fakeOutput.stopNote = function (note_name, channel) {
